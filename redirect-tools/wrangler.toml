@@ -1,0 +1,11 @@
+name = "redirect-tools"
+main = "src/worker.js"
+compatibility_date = "2024-05-01"
+workers_dev = true
+
+[[routes]]
+pattern = "tool.dev66.net"
+custom_domain = true
+[[routes]]
+pattern = "t.dev66.net"
+custom_domain = true

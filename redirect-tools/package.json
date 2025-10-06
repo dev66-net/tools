@@ -1,0 +1,12 @@
+{
+  "name": "redirect-tools",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "deploy": "wrangler deploy"
+  },
+  "devDependencies": {
+    "wrangler": "^3.53.1"
+  }
+}

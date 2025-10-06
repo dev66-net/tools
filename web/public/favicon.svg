@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="工具集图标">
+  <defs>
+    <linearGradient id="bg" x1="10" y1="8" x2="54" y2="56" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#2563eb" />
+      <stop offset="1" stop-color="#7c3aed" />
+    </linearGradient>
+    <linearGradient id="tool" x1="22" y1="20" x2="46" y2="44" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#f8fafc" />
+      <stop offset="1" stop-color="#cbd5f5" />
+    </linearGradient>
+  </defs>
+  <rect x="4" y="4" width="56" height="56" rx="14" fill="url(#bg)" />
+  <g fill="none" stroke="#1d1b3a" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" opacity="0.35">
+    <path d="M20 18h12" />
+    <path d="M32 18l4-8" />
+    <path d="M26 46l-6 6" />
+    <path d="M38 46l10 10" />
+  </g>
+  <path fill="url(#tool)" d="M24.24 42.83a4.5 4.5 0 010-6.36l11.32-11.32a7 7 0 019.9 0l1.41 1.41-4.24 4.24-1.42-1.41a2.5 2.5 0 00-3.54 0l-8.48 8.48a2.5 2.5 0 003.54 3.54l3.54-3.54 4.24 4.24-3.54 3.54a7 7 0 01-9.9 0l-2.83-2.83z" />
+  <circle cx="21" cy="25" r="4" fill="#f8fafc" opacity="0.85" />
+</svg>
