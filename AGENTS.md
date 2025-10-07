@@ -37,4 +37,5 @@
 ## 添加新工具视图
 - 在 `web/src/` 使用 PascalCase 新建组件并导出 React 组件。
 - 在 `web/src/App.tsx` 的 `toolRoutes` 中登记 `path`、`label`、`Component`；对重量级视图可结合 `React.lazy` 与 `Suspense` 并添加 `preload` 回调。
+- 同时为每个工具在 `web/src/tools.tsx` 写明 `executionMode`（`browser` 或 `remote`）与 `executionNote`，用于渲染运行方式提示；新增工具若依赖远程服务必须显式说明原因与安全注意事项。
 - 如需外链更新 `externalTools` 列表，本地通过 `pnpm dev:web` 验证后执行 `pnpm build:web` 确认生产构建。

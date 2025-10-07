@@ -481,8 +481,10 @@ export default function MarkdownRenderer() {
 
   return (
     <main className="card markdown-card">
-      <h1>Markdown 渲染器</h1>
-      <p className="card-description">实时渲染 Markdown 内容，支持 GitHub 风格扩展，并可一键打印预览区域。</p>
+      <h1>Markdown 渲染器：在线预览与导出</h1>
+      <p className="card-description">
+        Markdown 渲染器支持 GitHub 风格语法、实时双栏预览、代码高亮与一键打印，适合撰写 README、会议纪要和产品文档。
+      </p>
 
       <section className="section">
         <div className="markdown-grid">
@@ -548,6 +550,18 @@ export default function MarkdownRenderer() {
             </div>
           </div>
         </div>
+      </section>
+      <section className="section">
+        <header className="section-header">
+          <h2>高效整理 Markdown 文档</h2>
+          <p>结合示例模板与打印导出，可快速生成可分享的排版成品。</p>
+        </header>
+        <ul>
+          <li>通过启用 GFM 支持表格、任务列表和删除线，让项目文档与 GitHub 渲染保持一致。</li>
+          <li>点击“打印”可将预览窗口直接导出为 PDF，适用于归档会议纪要或设计说明。</li>
+          <li>建议定期复制 Markdown 原文备份至版本库，配合本工具预览即可即时校验排版效果。</li>
+        </ul>
+        <p className="hint">所有渲染在本地完成，适用于内网环境或处理未公开的项目文档。</p>
       </section>
     </main>
   );

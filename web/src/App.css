@@ -191,9 +191,54 @@ body.print-mode {
 .content {
   flex: 1;
   display: flex;
-  align-items: flex-start;
-  justify-content: center;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 1.5rem;
   padding: 1.5rem 1.25rem 2rem;
+}
+
+.tool-meta {
+  width: min(760px, 100%);
+  display: grid;
+  gap: 0.3rem;
+  padding: 1rem 1.25rem;
+  border-radius: 16px;
+  background: rgba(59, 130, 246, 0.08);
+  border: 1px solid rgba(59, 130, 246, 0.18);
+  color: #1e3a8a;
+  box-shadow: 0 12px 32px rgba(37, 99, 235, 0.12);
+}
+
+.tool-meta-label {
+  font-size: 0.8rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  font-weight: 600;
+  color: rgba(30, 64, 175, 0.85);
+}
+
+.tool-meta-value {
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+
+.tool-meta-note {
+  font-size: 0.92rem;
+  color: rgba(30, 64, 175, 0.85);
+  line-height: 1.55;
+}
+
+.tool-meta--remote {
+  background: rgba(249, 115, 22, 0.1);
+  border-color: rgba(249, 115, 22, 0.24);
+  color: #9a3412;
+  box-shadow: 0 12px 32px rgba(249, 115, 22, 0.12);
+}
+
+.tool-meta--remote .tool-meta-label,
+.tool-meta--remote .tool-meta-note {
+  color: rgba(154, 52, 18, 0.85);
 }
 
 .route-fallback {

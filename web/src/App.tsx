@@ -3,12 +3,31 @@ import type { ChangeEvent, ReactNode } from 'react';
 import { NavLink, Navigate, Outlet, Route, Routes, useLocation } from 'react-router-dom';
 import tools from './tools.tsx';
 import './App.css';
+import Home from './Home.tsx';
+
+const MAIN_TITLE = 'tools.dev66.net 开发者工具集';
+const DEFAULT_DESCRIPTION =
+  'tools.dev66.net 提供二维码生成、JSON 格式化、UUID、哈希等常用开发者工具，所有数据在浏览器本地处理，安全便捷。';
+const DEFAULT_KEYWORDS = [
+  '开发者工具',
+  '在线工具',
+  '二维码',
+  'JSON',
+  'UUID',
+  'Base64',
+  '哈希',
+  'Markdown',
+  'JWT',
+];
 
 type ToolRoute = {
   path: string;
   label: string;
+  pageTitle: string;
   description: string;
   keywords: string[];
+  executionMode: 'browser' | 'remote';
+  executionNote: string;
   element: ReactNode;
   preload?: () => void;
   searchText: string;
@@ -26,18 +45,35 @@ function withSuspense(element: ReactNode, label: string): ReactNode {
   return <Suspense fallback={<RouteFallback label={label} />}>{element}</Suspense>;
 }
 
+const homeFallbackLabel = '站点简介';
+const homeElement = withSuspense(<Home />, homeFallbackLabel);
+
 const toolRoutes: ToolRoute[] = tools.map((tool) => {
-  const { Component, description, fallbackLabel, keywords, label, path, preload } = tool;
+  const {
+    Component,
+    description,
+    executionMode,
+    executionNote,
+    fallbackLabel,
+    keywords,
+    label,
+    pageTitle,
+    path,
+    preload,
+  } = tool;
   const element = withSuspense(<Component />, fallbackLabel);
-  const searchText = [label, fallbackLabel, description, keywords.join(' '), path]
+  const searchText = [label, fallbackLabel, pageTitle, description, executionNote, keywords.join(' '), path]
     .join(' ')
     .toLowerCase();
 
   return {
     path,
     label,
+    pageTitle,
     description,
     keywords,
+    executionMode,
+    executionNote,
     element,
     preload,
     searchText,
@@ -51,14 +87,15 @@ const externalTools = [
   { name: 'JSON Formatter', href: 'https://jsonformatter.org/' },
 ];
 
-const defaultPath = toolRoutes[0]!.path;
-
 function Layout() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const searchInputRef = useRef<HTMLInputElement | null>(null);
   const isMobile = useIsMobile();
   const location = useLocation();
+  const normalizedPath = useMemo(() => location.pathname.replace(/^\/+/, ''), [location.pathname]);
+  const pathSegment = useMemo(() => normalizedPath.split('/')[0] ?? '', [normalizedPath]);
+  const activeRoute = useMemo(() => toolRoutes.find((route) => route.path === pathSegment) ?? null, [pathSegment]);
   const isPrintMode = useMemo(() => {
     const params = new URLSearchParams(location.search);
     if (!params.has('print')) {
@@ -93,6 +130,33 @@ function Layout() {
   }, [location]);
 
   useEffect(() => {
+    if (typeof document === 'undefined') {
+      return;
+    }
+
+    const title = activeRoute ? activeRoute.pageTitle : MAIN_TITLE;
+    const descriptionContent = activeRoute?.description ?? DEFAULT_DESCRIPTION;
+    const keywordsContent = (activeRoute?.keywords ?? DEFAULT_KEYWORDS).join(', ');
+
+    document.title = title;
+
+    const ensureMeta = (name: string, content: string) => {
+      const existing = document.querySelector(`meta[name="${name}"]`);
+      if (existing instanceof HTMLMetaElement) {
+        existing.content = content;
+        return;
+      }
+      const meta = document.createElement('meta');
+      meta.name = name;
+      meta.content = content;
+      document.head.appendChild(meta);
+    };
+
+    ensureMeta('description', descriptionContent);
+    ensureMeta('keywords', keywordsContent);
+  }, [activeRoute]);
+
+  useEffect(() => {
     if (isMobile && menuOpen) {
       searchInputRef.current?.focus();
     }
@@ -105,6 +169,7 @@ function Layout() {
     }
     return toolRoutes.filter((route) => route.searchText.includes(term));
   }, [searchTerm]);
+  const hasSearchTerm = searchTerm.trim().length > 0;
 
   const handleSearchChange = useCallback((event: ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(event.target.value);
@@ -174,13 +239,16 @@ function Layout() {
           />
         </div>
         <nav className="nav">
+          <NavLink to="/" className={({ isActive }) => (isActive ? 'active' : '')} end>
+            站点简介
+          </NavLink>
           {filteredRoutes.length === 0 ? (
-            <div className="menu-empty">没有找到匹配的工具</div>
+            hasSearchTerm ? <div className="menu-empty">没有找到匹配的工具</div> : null
           ) : (
             filteredRoutes.map(({ path, label, preload }) => (
               <NavLink
                 key={path}
-                to={path}
+                to={`/${path}`}
                 className={({ isActive }) => (isActive ? 'active' : '')}
                 end
                 onMouseEnter={() => preload?.()}
@@ -205,6 +273,20 @@ function Layout() {
         </div>
       </aside>
       <section className="content">
+        <div
+          className={`tool-meta${
+            activeRoute?.executionMode ? ` tool-meta--${activeRoute.executionMode}` : ' tool-meta--browser'
+          }`}
+          role="note"
+        >
+          <span className="tool-meta-label">运行方式</span>
+          <span className="tool-meta-value">
+            {activeRoute?.executionMode === 'remote' ? '依赖远程服务' : '浏览器本地计算'}
+          </span>
+          <span className="tool-meta-note">
+            {activeRoute?.executionNote ?? '本站所有工具默认由浏览器本地执行，避免敏感数据外泄。'}
+          </span>
+        </div>
         <Outlet />
       </section>
     </div>
@@ -254,12 +336,12 @@ export default function App() {
   return (
     <Routes>
       <Route path="/" element={<Layout />}>
-        <Route index element={<Navigate to={defaultPath} replace />} />
+        <Route index element={homeElement} />
         {toolRoutes.map(({ path, element }) => (
           <Route key={path} path={path} element={element} />
         ))}
       </Route>
-      <Route path="*" element={<Navigate to={`/${defaultPath}`} replace />} />
+      <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
 }

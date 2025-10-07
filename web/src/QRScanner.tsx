@@ -225,51 +225,68 @@ export default function QRScanner() {
   };
 
   return (
-    <section className="scanner">
-      <div
-        className="scan-dropzone"
-        onDrop={handleDrop}
-        onDragOver={(event) => event.preventDefault()}
-        onPaste={handlePaste}
-      >
-        <p className="scan-instruction">粘贴图片到此区域，或拖拽 / 选择本地图片文件</p>
-        <button type="button" className="secondary" onClick={triggerFileDialog} disabled={isProcessing}>
-          选择图片
-        </button>
-        {isProcessing && <p className="scan-status">正在识别中…</p>}
-        {error && <p className="form-error">{error}</p>}
-      </div>
-
-      {previewUrl && (
-        <div className="scan-preview-wrapper">
-          <span className="scan-preview-label">预览</span>
-          <img src={previewUrl} alt="二维码预览" className="scan-preview" />
-        </div>
-      )}
-
-      <div className="scan-result">
-        <div className="scan-result-header">
-          <span>识别结果</span>
-          <button type="button" className="icon-button" onClick={handleCopyResult} disabled={!result} aria-label="复制结果">
-            {copyIcon}
+    <main className="card">
+      <h1>二维码识别器：上传图片或粘贴二维码</h1>
+      <p className="card-description">
+        二维码识别器支持拖拽、粘贴或上传图片，自动旋转校正模糊二维码，快速提取二维码内的链接、文本或指令内容。
+      </p>
+      <section className="scanner">
+        <div
+          className="scan-dropzone"
+          onDrop={handleDrop}
+          onDragOver={(event) => event.preventDefault()}
+          onPaste={handlePaste}
+        >
+          <p className="scan-instruction">粘贴图片到此区域，或拖拽 / 选择本地图片文件</p>
+          <button type="button" className="secondary" onClick={triggerFileDialog} disabled={isProcessing}>
+            选择图片
           </button>
+          {isProcessing && <p className="scan-status">正在识别中…</p>}
+          {error && <p className="form-error">{error}</p>}
         </div>
-        <textarea
-          className="scan-result-text"
-          value={result}
-          readOnly
-          placeholder="识别内容会显示在这里"
-        />
-      </div>
 
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept="image/*"
-        className="hidden-file-input"
-        onChange={handleFileChange}
-      />
-      <canvas ref={canvasRef} className="hidden-canvas" />
-    </section>
+        {previewUrl && (
+          <div className="scan-preview-wrapper">
+            <span className="scan-preview-label">预览</span>
+            <img src={previewUrl} alt="二维码预览" className="scan-preview" />
+          </div>
+        )}
+
+        <div className="scan-result">
+          <div className="scan-result-header">
+            <span>识别结果</span>
+            <button type="button" className="icon-button" onClick={handleCopyResult} disabled={!result} aria-label="复制结果">
+              {copyIcon}
+            </button>
+          </div>
+          <textarea
+            className="scan-result-text"
+            value={result}
+            readOnly
+            placeholder="识别内容会显示在这里"
+          />
+        </div>
+
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          className="hidden-file-input"
+          onChange={handleFileChange}
+        />
+        <canvas ref={canvasRef} className="hidden-canvas" />
+      </section>
+      <section className="section">
+        <header className="section-header">
+          <h2>二维码识别最佳实践</h2>
+          <p>保证图片清晰且二维码占据主体位置，可大幅提升识别成功率。</p>
+        </header>
+        <ul>
+          <li>支持直接粘贴截图或使用手机扫描二维码后发送到电脑再上传处理。</li>
+          <li>若遇到旋转或倾斜的二维码，可多次尝试，识别器会自动尝试多角度校正。</li>
+          <li>复制结果前请确认内容来源可靠，避免执行未知脚本或访问钓鱼链接。</li>
+        </ul>
+      </section>
+    </main>
   );
 }

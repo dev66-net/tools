@@ -151,8 +151,10 @@ export default function HashGenerator() {
 
   return (
     <main className="card">
-      <h1>哈希值计算</h1>
-      <p className="card-description">对输入内容计算 MD5、SHA-1 与 SHA-256 摘要，可复制 Hex 或 Base64 结果。</p>
+      <h1>哈希计算器：在线生成 MD5 与 SHA 摘要</h1>
+      <p className="card-description">
+        输入任意文本即可计算 MD5、SHA-1、SHA-256 等常见散列，支持复制 Hex 与 Base64 结果，便于校验文件或接口签名。
+      </p>
       <section className="section">
         <label htmlFor="hash-input">待计算文本</label>
         <textarea
@@ -222,6 +224,18 @@ export default function HashGenerator() {
             </div>
           ))}
         </div>
+      </section>
+      <section className="section">
+        <header className="section-header">
+          <h2>哈希校验提示</h2>
+          <p>对比 Hex 或 Base64 摘要即可验证内容是否被篡改。</p>
+        </header>
+        <ul>
+          <li>复制 Hex 摘要用于对照下载页或接口返回的签名，确认文件完整性。</li>
+          <li>Base64 摘要常用于 HTTP 头或数据库字段，点击“复制”即可粘贴到调试工具。</li>
+          <li>处理大文本时哈希计算可能稍有延迟，请耐心等待提示变为“已复制”。</li>
+        </ul>
+        <p className="hint">工具在浏览器本地计算哈希，可用于处理包含密钥或敏感配置的内容。</p>
       </section>
     </main>
   );

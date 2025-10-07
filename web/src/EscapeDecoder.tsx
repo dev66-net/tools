@@ -408,9 +408,9 @@ export default function EscapeDecoder() {
 
   return (
     <main className="card">
-      <h1>转义字符串解码</h1>
+      <h1>转义字符解码器：解析多语言转义</h1>
       <p className="card-description">
-        解析不同语言中常见的转义序列，可自动识别或手动指定 JSON、JavaScript、Python 与 Shell 模式。
+        兼容 JSON、JavaScript、Python、Shell 等转义规则，自动识别 Unicode、十六进制与八进制序列，帮助恢复原始文本或代码片段。
       </p>
       <section className="section">
         <label htmlFor="escape-mode">解析模式</label>
@@ -462,6 +462,18 @@ export default function EscapeDecoder() {
             清空输入
           </button>
         </div>
+      </section>
+      <section className="section">
+        <header className="section-header">
+          <h2>常见应用场景</h2>
+          <p>在调试日志、接口数据或脚本模板时，可结合不同模式快速还原原文。</p>
+        </header>
+        <ul>
+          <li>选择“自动”即可自动识别常见语言，若识别不准确，可手动切换模式再次解析。</li>
+          <li>通过“JSON 再编码”快速获取可直接粘贴到代码中的安全字符串表示。</li>
+          <li>处理多层转义时，解码结果再次粘贴到输入区域即可继续剥离下一层。</li>
+        </ul>
+        <p className="hint">工具仅在本地运行，可用于排查包含密钥或私密信息的配置与日志。</p>
       </section>
     </main>
   );

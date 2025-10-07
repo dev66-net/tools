@@ -189,7 +189,10 @@ export default function UrlParse() {
 
   return (
     <main className="card">
-      <h1>URL 解析工具</h1>
+      <h1>URL 解析器：分解链接结构与参数</h1>
+      <p className="card-description">
+        URL 解析器实时拆解协议、域名、路径与查询参数，并内置 URL 编解码小工具，适合排查跳转、签名与重定向问题。
+      </p>
       <form className="form" autoComplete="off" onSubmit={(event) => event.preventDefault()}>
         <label htmlFor="url-parser-input">请输入 URL：</label>
         <input
@@ -358,6 +361,18 @@ export default function UrlParse() {
             {decodeError && <p className="transform-error">{decodeError}</p>}
           </article>
         </div>
+      </section>
+      <section className="section">
+        <header className="section-header">
+          <h2>URL 调试建议</h2>
+          <p>结合查询参数与编码工具，可以快速验证接口回调、OAuth 跳转或日志中的可疑链接。</p>
+        </header>
+        <ul>
+          <li>若输入缺少协议，工具会自动补全 https:// 方便解析，可在“协议”栏确认真实协议。</li>
+          <li>点击查询参数右侧的复制按钮即可复制值，便于调试签名或粘贴到 Postman、cURL。</li>
+          <li>对疑似被编码多次的字符串，可先使用 URL Decode 工具逐次解码再观察结果。</li>
+        </ul>
+        <p className="hint">处理敏感链接时请注意隐藏令牌或签名参数，避免在分享截图时泄露信息。</p>
       </section>
     </main>
   );

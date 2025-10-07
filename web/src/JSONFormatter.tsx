@@ -147,8 +147,8 @@ export default function JSONFormatter() {
   return (
     <div className="json-wrapper">
       <header className="json-header">
-        <h1>JSON 格式化器</h1>
-        <p>快速格式化或压缩 JSON 文本，自动检测语法错误，并可复制结果。</p>
+        <h1>JSON 格式化器：在线美化与压缩</h1>
+        <p>快速格式化或压缩 JSON 文本，自动检测语法错误并支持深浅色主题，适合调试 API、配置文件与日志。</p>
       </header>
       <div className="json-columns">
         <section className="json-panel">
@@ -227,6 +227,18 @@ export default function JSONFormatter() {
           </div>
         </section>
       </div>
+      <section className="section">
+        <header className="section-header">
+          <h2>JSON 调试小贴士</h2>
+          <p>借助格式化结果和状态提示，可以快速定位字段错误并准备 API 示例。</p>
+        </header>
+        <ul>
+          <li>使用“填充示例”快速演示格式化流程，便于向团队成员展示使用方法。</li>
+          <li>切换至“压缩”模式可以得到最短的 JSON 串，适合嵌入查询参数或节省带宽。</li>
+          <li>遇到解析失败时查看状态与错误信息，通常能精准定位缺失的逗号或引号。</li>
+        </ul>
+        <p className="hint">本工具完全在浏览器中运行，不会上传数据，可放心格式化包含敏感信息的响应。</p>
+      </section>
     </div>
   );
 }

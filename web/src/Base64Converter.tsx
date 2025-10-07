@@ -200,9 +200,9 @@ export default function Base64Converter() {
 
   return (
     <main className="card">
-      <h1>Base64 编码 / 解码</h1>
+      <h1>Base64 编解码器：支持标准与 URL Safe</h1>
       <p className="card-description">
-        支持标准与 URL Safe 变体的 Base64 编码，解码时自动识别类型并补全缺失的补位字符。
+        Base64 编解码器支持标准与 URL Safe 变体，自动识别补位并展示十六进制视图，帮助定位接口字段或附件数据问题。
       </p>
       <section className="section">
         <header className="section-header">
@@ -280,6 +280,18 @@ export default function Base64Converter() {
             清空输入
           </button>
         </div>
+      </section>
+      <section className="section">
+        <header className="section-header">
+          <h2>Base64 使用技巧</h2>
+          <p>结合十六进制与补位提示，快速判断数据来源并校验传输格式。</p>
+        </header>
+        <ul>
+          <li>在调试接口响应时，可粘贴 Base64 字段并对照十六进制输出判断文件类型。</li>
+          <li>URL Safe 变体通常应用于 JWT、URL 参数，解码前无需手动替换字符，工具会自动处理。</li>
+          <li>若遇到长度错误，查看提示的补位数量，确认上游是否缺少“=”导致传输异常。</li>
+        </ul>
+        <p className="hint">所有转换操作均在本地执行，可放心处理包含令牌或私密信息的内容。</p>
       </section>
     </main>
   );

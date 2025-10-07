@@ -167,8 +167,10 @@ export default function HexConverter() {
 
   return (
     <main className="card">
-      <h1>Hex 编码 / 解码</h1>
-      <p className="card-description">进行文本与十六进制之间的转换，支持大小写与分隔形式的调节。</p>
+      <h1>Hex 转换器：文本与十六进制互转</h1>
+      <p className="card-description">
+        Hex 转换器支持文本与十六进制双向转换，提供大小写、分组和字节统计选项，帮助分析二进制内容与网络报文。
+      </p>
       <section className="section">
         <header className="section-header">
           <h2>文本转 Hex</h2>
@@ -239,6 +241,18 @@ export default function HexConverter() {
             清空输入
           </button>
         </div>
+      </section>
+      <section className="section">
+        <header className="section-header">
+          <h2>十六进制排查技巧</h2>
+          <p>利用标准化输出和字节统计，可快速识别编码方式或数据截断问题。</p>
+        </header>
+        <ul>
+          <li>转换结果中的“字节数”有助于确认文件大小，适合对比接口上传的二进制长度。</li>
+          <li>使用自定义分组可生成常见的 0xAB、ABCD 等格式，方便粘贴到代码或协议说明。</li>
+          <li>若解码失败，请确认输入是否含有非十六进制字符或奇数长度，必要时先清理分隔符。</li>
+        </ul>
+        <p className="hint">本工具完全离线运行，适合在内网环境处理日志或敏感报文。</p>
       </section>
     </main>
   );

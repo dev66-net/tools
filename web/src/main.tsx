@@ -17,13 +17,23 @@ ReactDOM.createRoot(rootElement).render(
 );
 
 if ('serviceWorker' in navigator) {
-  const register = async () => {
-    try {
-      await navigator.serviceWorker.register('/service-worker.js');
-    } catch (error) {
-      console.error('Service worker registration failed', error);
-    }
-  };
+  if (import.meta.env.PROD) {
+    const register = async () => {
+      try {
+        await navigator.serviceWorker.register('/service-worker.js');
+      } catch (error) {
+        console.error('Service worker registration failed', error);
+      }
+    };
 
-  void register();
+    void register();
+  } else {
+    // Ensure stale production service workers do not break local development / HMR.
+    navigator.serviceWorker
+      .getRegistrations()
+      .then((registrations) => Promise.all(registrations.map((registration) => registration.unregister())))
+      .catch((error) => {
+        console.warn('Failed to unregister existing service workers', error);
+      });
+  }
 }

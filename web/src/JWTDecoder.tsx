@@ -216,8 +216,8 @@ export default function JWTDecoder() {
   return (
     <div className="jwt-wrapper">
       <header className="jwt-header">
-        <h1>JWT 解析器</h1>
-        <p>解码 JSON Web Token，查看 Header 与 Payload，并可选输入密钥验证 HS256 签名。</p>
+        <h1>JWT 解码器：在线解析与校验</h1>
+        <p>在线解码 JSON Web Token，结构化展示 Header 与 Payload，并可输入共享密钥校验 HS256 签名和过期时间。</p>
       </header>
       <div className="jwt-columns">
         <section className="jwt-panel">
@@ -310,6 +310,18 @@ export default function JWTDecoder() {
           </div>
         </section>
       </div>
+      <section className="section">
+        <header className="section-header">
+          <h2>JWT 调试建议</h2>
+          <p>排查登录态或接口授权问题时，可结合密钥校验快速定位异常。</p>
+        </header>
+        <ul>
+          <li>复制生产环境的 Token 时注意隐藏敏感字段，建议在安全的沙箱或本地环境中操作。</li>
+          <li>若签名校验失败，优先确认算法（alg）与密钥是否匹配，再比对 exp、iat 等时间字段。</li>
+          <li>可使用示例 Token 与密钥熟悉流程，再对接真实业务 Token，避免直接在生产环境测试。</li>
+        </ul>
+        <p className="hint">本工具不会上传任何 Token 数据，适合在调试阶段验证自定义声明或快速定位授权异常。</p>
+      </section>
     </div>
   );
 }

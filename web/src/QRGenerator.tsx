@@ -77,7 +77,10 @@ export default function QRGenerator() {
 
   return (
     <main className="card">
-      <h1>URL 二维码生成器</h1>
+      <h1>二维码生成器：在线创建高清 QR Code</h1>
+      <p className="card-description">
+        在线二维码生成器支持链接、文本、名片和 Wi-Fi 等内容，一键生成高清二维码并可下载 PNG 图片，适合海报、打印与分享场景。
+      </p>
       <form onSubmit={handleSubmit} className="form" autoComplete="off">
         <label htmlFor="url-input">请输入内容：</label>
         <input
@@ -110,6 +113,18 @@ export default function QRGenerator() {
       <div className={`qr-output${qrValue ? '' : ' empty'}`}>
         <canvas ref={canvasRef} width="256" height="256" />
       </div>
+      <section className="section">
+        <header className="section-header">
+          <h2>如何快速生成二维码</h2>
+          <p>输入任意文本、链接或数据，选择是否自动生成并立即获取高分辨率二维码。</p>
+        </header>
+        <ol>
+          <li>在输入框粘贴网址、手机号、Wi-Fi 配置或自定义文本。</li>
+          <li>保持“自动生成二维码”开启可实时预览，关闭后可在编辑完毕时手动点击按钮。</li>
+          <li>右键或长按二维码即可保存 PNG 图片，用于海报、名片或宣传物料。</li>
+        </ol>
+        <p className="hint">建议在生成大型宣传物料前进行扫码测试，确保文本内容准确无误。</p>
+      </section>
     </main>
   );
 }

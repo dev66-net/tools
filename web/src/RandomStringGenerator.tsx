@@ -136,8 +136,10 @@ export default function RandomStringGenerator() {
 
   return (
     <main className="card">
-      <h1>随机字符串生成器</h1>
-      <p className="card-description">组合多种字符集快速生成随机字符串，支持批量输出与安全随机源。</p>
+      <h1>随机字符串生成器：自定义字符集批量生成</h1>
+      <p className="card-description">
+        组合多种字符集或自定义符号，一键批量生成随机字符串，并可启用加密安全随机源用于密码、Token 或测试数据。
+      </p>
       <section className="section">
         <div className="form-grid">
           <div className="form-field">
@@ -240,6 +242,18 @@ export default function RandomStringGenerator() {
             </ol>
           </>
         ) : null}
+      </section>
+      <section className="section">
+        <header className="section-header">
+          <h2>构建安全可靠的随机字符串</h2>
+          <p>根据目标场景调整字符集与长度，既保证复杂度又方便记忆或复制。</p>
+        </header>
+        <ul>
+          <li>生成密码时建议同时勾选大小写、数字与符号，并开启加密安全随机源。</li>
+          <li>用于测试数据时，可通过自定义字符添加中文或特定前缀，模拟真实输入。</li>
+          <li>批量生成的结果支持一键复制，粘贴到脚本或 CSV 即可完成数据准备。</li>
+        </ul>
+        <p className="hint">浏览器内生成无需联网，适合企业内网或离线环境快速制作凭证与测试样本。</p>
       </section>
     </main>
   );

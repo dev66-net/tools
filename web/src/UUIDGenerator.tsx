@@ -107,8 +107,10 @@ export default function UUIDGenerator() {
 
   return (
     <main className="card">
-      <h1>UUID 生成器</h1>
-      <p className="card-description">生成常见版本的 UUID，支持 v1（时间序列）、v4（随机）与 v5（基于名称）。</p>
+      <h1>UUID 生成器：在线创建 v1/v4/v5</h1>
+      <p className="card-description">
+        即时生成时间序列 v1、随机 v4 以及基于命名空间的 v5 UUID，支持批量复制与自定义命名空间，适合标识资源或请求链路。
+      </p>
       <section className="section">
         <header className="section-header">
           <h2>UUID v4 · 随机</h2>
@@ -210,6 +212,18 @@ export default function UUIDGenerator() {
         <div className="uuid-output">
           <code>{v5Uuid || '生成结果将显示在此处'}</code>
         </div>
+      </section>
+      <section className="section">
+        <header className="section-header">
+          <h2>选择合适的 UUID 版本</h2>
+          <p>根据业务需求选择合适的算法，确保 ID 稳定且不冲突。</p>
+        </header>
+        <ul>
+          <li>v4 随机 UUID 适合生成不可预测的标识符，例如订单号、会话 ID。</li>
+          <li>v1 基于时间戳，便于按时间排序，但包含节点信息，适合内部系统使用。</li>
+          <li>v5 将命名空间与名称哈希成固定值，适用于根据域名、路径生成稳定 ID。</li>
+        </ul>
+        <p className="hint">生成结果保留在本地，复制后可直接粘贴到代码、数据库或配置文件中。</p>
       </section>
     </main>
   );

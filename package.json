@@ -8,7 +8,8 @@
     "dev:web": "vite dev --host --port 5175",
     "dev:worker": "wrangler dev --assets dist",
     "build": "pnpm build:web",
-    "build:web": "vite build",
+    "build:web": "vite build && pnpm prerender",
+    "prerender": "vite-node web/scripts/prerender.ts",
     "preview:web": "vite preview --host",
     "deploy": "pnpm build:web && wrangler deploy --assets dist",
     "deploy:prod": "pnpm build:web && wrangler deploy --assets dist --env production"
@@ -34,6 +35,7 @@
     "@vitejs/plugin-react": "^4.6.0",
     "typescript": "^5.5.4",
     "vite": "^5.4.7",
+    "vite-node": "^1.6.0",
     "wrangler": "^4.42.0"
   }
 }
