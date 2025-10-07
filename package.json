@@ -7,6 +7,7 @@
     "dev": "pnpm dev:web",
     "dev:web": "vite dev --host --port 5175",
     "dev:worker": "wrangler dev --assets dist",
+    "clean": "rm -rfv ./dist",
     "build": "pnpm build:web",
     "build:web": "vite build && pnpm prerender",
     "prerender": "vite-node web/scripts/prerender.ts",

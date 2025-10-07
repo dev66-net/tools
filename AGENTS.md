@@ -36,6 +36,16 @@
 
 ## 添加新工具视图
 - 在 `web/src/` 使用 PascalCase 新建组件并导出 React 组件。
-- 在 `web/src/App.tsx` 的 `toolRoutes` 中登记 `path`、`label`、`Component`；对重量级视图可结合 `React.lazy` 与 `Suspense` 并添加 `preload` 回调。
-- 同时为每个工具在 `web/src/tools.tsx` 写明 `executionMode`（`browser` 或 `remote`）与 `executionNote`，用于渲染运行方式提示；新增工具若依赖远程服务必须显式说明原因与安全注意事项。
+- 在 `web/src/tools.tsx` 中登记工具 `id` 与 `slug`，保持懒加载组件导入并补充 `executionMode` 与 `preload` 回调。
+- 对需要远程能力的工具必须在翻译文件中补充执行说明，并在 UI 中解释依赖缘由、安全注意事项。
 - 如需外链更新 `externalTools` 列表，本地通过 `pnpm dev:web` 验证后执行 `pnpm build:web` 确认生产构建。
+
+## 多语言与 SEO 策略
+- 语言路由：英文为默认语言，输出 `/foo.html`；中文使用首段路径 `/zh-cn/foo.html`，保持 `.html` 后缀方便静态托管与抓取。
+- 元数据：所有语言在构建时生成本地化的标题、`meta description`、关键词、OG 标签及结构化数据，必要时根据语言调整关键字用词。
+- hreflang 与 canonical：每个页面都添加自指向 canonical，并在 `<head>` 中互相声明 `<link rel="alternate" hreflang="…">`，覆盖英文、中文和未来扩展语言；默认英文使用 `x-default`。
+- 语言切换：导航下方提供 `<details>` 语言选择器，指向对应 `.html` 页面，禁止基于地理位置自动跳转，确保搜索引擎可遍历全部语言版本。
+- 站点地图：静态生成产物需在 sitemap 中列出全部语言 URL；当语言增多时按语言拆分 sitemap（例如 `sitemap-en.xml`、`sitemap-zh-cn.xml`）。
+- 构建输出：多语言页面复用相同的 JS/CSS 资产，减少 CDN 缓存压力；仅 HTML 内容多语言化，避免布局抖动。
+- 手动校验：每次发版前访问 `/index.html`、`/zh-cn/index.html` 等关键页面，确认文案、 hreflang 与 canonical 标签准确无误。
+- 文案组织：翻译按语言与工具拆分存放，例如 `web/src/locales/en/home.ts`、`web/src/locales/en/tools/qrGenerator.ts`、`web/src/locales/zh-CN/tools/qrGenerator.ts`；各语言通过 `index.ts` 聚合后再在 `i18n` 中引用。

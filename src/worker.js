@@ -15,9 +15,37 @@ export default {
 
     let assetResponse;
     try {
-      assetResponse = await assetsBinding.fetch(request);
+      assetResponse = await assetsBinding.fetch(request, { redirect: 'manual' });
     } catch (error) {
       console.error('ASSETS fetch failed', error);
+    }
+
+    if (assetResponse && assetResponse.status >= 300 && assetResponse.status < 400) {
+      const redirectTarget = assetResponse.headers.get('Location');
+      const isHtmlRequest = url.pathname.endsWith('.html');
+
+      if (redirectTarget && isHtmlRequest) {
+        try {
+          const normalizedTarget = new URL(redirectTarget, url);
+          const followRequest = new Request(normalizedTarget.toString(), request);
+          const followResponse = await assetsBinding.fetch(followRequest, { redirect: 'manual' });
+
+          if (followResponse && followResponse.status !== 404) {
+            const headers = new Headers(followResponse.headers);
+            headers.delete('Location');
+            assetResponse = new Response(followResponse.body, {
+              status: followResponse.status,
+              statusText: followResponse.statusText,
+              headers,
+            });
+          }
+        } catch (error) {
+          console.error('Failed to follow asset redirect', {
+            target: redirectTarget,
+            error,
+          });
+        }
+      }
     }
 
     if (assetResponse && assetResponse.status !== 404) {

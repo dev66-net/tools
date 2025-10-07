@@ -1,4 +1,5 @@
 import { ChangeEvent, useEffect, useRef, useState } from 'react';
+import { useI18n } from './i18n/index';
 
 type QueryParam = {
   key: string;
@@ -22,6 +23,72 @@ type UrlDetails = {
 type NormalizedUrl = {
   url: URL;
   addedScheme: boolean;
+};
+
+type UrlParserCopy = {
+  title: string;
+  description: string;
+  form: {
+    label: string;
+    placeholder: string;
+    emptyPrompt: string;
+    parseError: string;
+    noteAutoScheme: string;
+  };
+  details: {
+    title: string;
+    labels: {
+      scheme: string;
+      host: string;
+      hostname: string;
+      port: string;
+      pathname: string;
+      query: string;
+      hash: string;
+      username: string;
+      password: string;
+      origin: string;
+    };
+    empty: string;
+    maskedPassword: string;
+    defaultPath: string;
+  };
+  query: {
+    title: string;
+    empty: string;
+    unnamed: string;
+    emptyValue: string;
+    copy: string;
+    copied: string;
+  };
+  transform: {
+    title: string;
+  };
+  encode: {
+    title: string;
+    sourceLabel: string;
+    sourcePlaceholder: string;
+    resultLabel: string;
+    resultPlaceholder: string;
+    copy: string;
+    copied: string;
+  };
+  decode: {
+    title: string;
+    sourceLabel: string;
+    sourcePlaceholder: string;
+    resultLabel: string;
+    resultPlaceholder: string;
+    error: string;
+    copy: string;
+    copied: string;
+  };
+  tips: {
+    title: string;
+    description: string;
+    bullets: string[];
+    hint: string;
+  };
 };
 
 const inferUrl = (rawValue: string): NormalizedUrl | null => {
@@ -86,6 +153,8 @@ export default function UrlParse() {
   const [decodeResult, setDecodeResult] = useState<string>('');
   const [decodeError, setDecodeError] = useState<string>('');
   const copyTimeoutRef = useRef<number | null>(null);
+  const { translations } = useI18n();
+  const copy = translations.tools.urlParser.page as UrlParserCopy;
 
   useEffect(() => {
     return () => {
@@ -153,7 +222,7 @@ export default function UrlParse() {
     } catch (decodeFailure) {
       console.warn('Failed to decode value', decodeFailure);
       setDecodeResult('');
-      setDecodeError('解码失败，请确认输入是否为有效的 URL 编码。');
+      setDecodeError(copy.decode.error);
     }
   };
 
@@ -173,7 +242,7 @@ export default function UrlParse() {
     if (!normalized) {
       setDetails(null);
       setQueryParams([]);
-      setError('无法解析该 URL，请确认格式是否正确。');
+      setError(copy.form.parseError);
       setNote('');
       return;
     }
@@ -184,132 +253,158 @@ export default function UrlParse() {
     setDetails(urlDetails);
     setQueryParams(params);
     setError('');
-    setNote(urlDetails.addedScheme ? '已自动补全 https:// 前缀以便解析。' : '');
+    setNote(urlDetails.addedScheme ? copy.form.noteAutoScheme : '');
+  };
+
+  const renderDetails = () => {
+    if (!details) {
+      return null;
+    }
+
+    const fields: Array<{ key: keyof UrlDetails; label: string; value: string }> = [
+      {
+        key: 'scheme',
+        label: copy.details.labels.scheme,
+        value: details.scheme || copy.details.empty,
+      },
+      {
+        key: 'host',
+        label: copy.details.labels.host,
+        value: details.host || copy.details.empty,
+      },
+      {
+        key: 'hostname',
+        label: copy.details.labels.hostname,
+        value: details.hostname || copy.details.empty,
+      },
+      {
+        key: 'port',
+        label: copy.details.labels.port,
+        value: details.port || copy.details.empty,
+      },
+      {
+        key: 'pathname',
+        label: copy.details.labels.pathname,
+        value: details.pathname || copy.details.defaultPath,
+      },
+      {
+        key: 'query',
+        label: copy.details.labels.query,
+        value: details.query ? `?${details.query}` : copy.details.empty,
+      },
+      {
+        key: 'hash',
+        label: copy.details.labels.hash,
+        value: details.hash ? `#${details.hash}` : copy.details.empty,
+      },
+      {
+        key: 'username',
+        label: copy.details.labels.username,
+        value: details.username || copy.details.empty,
+      },
+      {
+        key: 'password',
+        label: copy.details.labels.password,
+        value: details.password ? copy.details.maskedPassword : copy.details.empty,
+      },
+      {
+        key: 'origin',
+        label: copy.details.labels.origin,
+        value: details.origin || copy.details.empty,
+      },
+    ];
+
+    return (
+      <section className="url-details">
+        <h2>{copy.details.title}</h2>
+        <dl className="url-detail-grid">
+          {fields.map((field) => (
+            <div key={field.key} className="url-detail">
+              <dt>{field.label}</dt>
+              <dd>{field.value}</dd>
+            </div>
+          ))}
+        </dl>
+      </section>
+    );
   };
 
   return (
     <main className="card">
-      <h1>URL 解析器：分解链接结构与参数</h1>
-      <p className="card-description">
-        URL 解析器实时拆解协议、域名、路径与查询参数，并内置 URL 编解码小工具，适合排查跳转、签名与重定向问题。
-      </p>
+      <h1>{copy.title}</h1>
+      <p className="card-description">{copy.description}</p>
       <form className="form" autoComplete="off" onSubmit={(event) => event.preventDefault()}>
-        <label htmlFor="url-parser-input">请输入 URL：</label>
+        <label htmlFor="url-parser-input">{copy.form.label}</label>
         <input
           id="url-parser-input"
           type="text"
           value={inputValue}
           onChange={handleInputChange}
-          placeholder="https://example.com/path?foo=bar&baz=qux"
+          placeholder={copy.form.placeholder}
         />
       </form>
       {error && <p className="form-error">{error}</p>}
       {!error && note && <p className="form-note">{note}</p>}
-      {!error && !details && !inputValue.trim() && (
-        <p className="query-empty">请输入待解析的 URL</p>
-      )}
+      {!error && !details && !inputValue.trim() && <p className="query-empty">{copy.form.emptyPrompt}</p>}
       {details && (
         <>
-          <section className="url-details">
-            <h2>URL 详情</h2>
-            <dl className="url-detail-grid">
-              <div className="url-detail">
-                <dt>协议</dt>
-                <dd>{details.scheme || '（无）'}</dd>
-              </div>
-              <div className="url-detail">
-                <dt>主机</dt>
-                <dd>{details.host || '（无）'}</dd>
-              </div>
-              <div className="url-detail">
-                <dt>域名</dt>
-                <dd>{details.hostname || '（无）'}</dd>
-              </div>
-              <div className="url-detail">
-                <dt>端口</dt>
-                <dd>{details.port || '（无）'}</dd>
-              </div>
-              <div className="url-detail">
-                <dt>路径</dt>
-                <dd>{details.pathname || '/'}</dd>
-              </div>
-              <div className="url-detail">
-                <dt>查询字符串</dt>
-                <dd>{details.query ? `?${details.query}` : '（无）'}</dd>
-              </div>
-              <div className="url-detail">
-                <dt>哈希</dt>
-                <dd>{details.hash ? `#${details.hash}` : '（无）'}</dd>
-              </div>
-              <div className="url-detail">
-                <dt>用户名</dt>
-                <dd>{details.username || '（无）'}</dd>
-              </div>
-              <div className="url-detail">
-                <dt>密码</dt>
-                <dd>{details.password ? '••••••' : '（无）'}</dd>
-              </div>
-              <div className="url-detail">
-                <dt>来源</dt>
-                <dd>{details.origin || '（无）'}</dd>
-              </div>
-            </dl>
-          </section>
+          {renderDetails()}
           {queryParams.length > 0 ? (
             <section className="query-params">
-              <h2>查询参数</h2>
+              <h2>{copy.query.title}</h2>
               <ul className="query-param-list">
                 {queryParams.map((param, index) => {
                   const identifier = `${param.key}-${index}`;
+                  const buttonLabel = copiedId === identifier ? copy.query.copied : copy.query.copy;
                   return (
                     <li key={identifier} className="query-param">
                       <div className="query-param-header">
-                        <span className="query-param-key">{param.key || '(未命名参数)'}</span>
+                        <span className="query-param-key">{param.key || copy.query.unnamed}</span>
                         <button
                           type="button"
                           className={`copy-button${copiedId === identifier ? ' copied' : ''}`}
                           onClick={() => handleCopy(param.value, identifier)}
                         >
-                          {copiedId === identifier ? '已复制' : '复制值'}
+                          {buttonLabel}
                         </button>
                       </div>
-                      <div className="query-param-value">{param.value || '(空字符串)'}</div>
+                      <div className="query-param-value">{param.value || copy.query.emptyValue}</div>
                     </li>
                   );
                 })}
               </ul>
             </section>
           ) : (
-            <p className="query-empty">该 URL 不包含查询参数</p>
+            <p className="query-empty">{copy.query.empty}</p>
           )}
         </>
       )}
       <section className="transform-tools">
-        <h2>URL 编解码</h2>
+        <h2>{copy.transform.title}</h2>
         <div className="transform-grid">
           <article className="transform-card">
             <header className="transform-header">
-              <h3>URL Encode</h3>
+              <h3>{copy.encode.title}</h3>
             </header>
             <label className="transform-label" htmlFor="url-encode-input">
-              原始文本
+              {copy.encode.sourceLabel}
             </label>
             <textarea
               id="url-encode-input"
               className="transform-textarea"
-              placeholder="任意文本，将自动转换为 URL 编码"
+              placeholder={copy.encode.sourcePlaceholder}
               value={encodeSource}
               onChange={handleEncodeChange}
             />
             <label className="transform-label" htmlFor="url-encode-output">
-              编码结果
+              {copy.encode.resultLabel}
             </label>
             <textarea
               id="url-encode-output"
               className="transform-textarea"
               value={encodeResult}
               readOnly
-              placeholder="编码结果会显示在这里"
+              placeholder={copy.encode.resultPlaceholder}
             />
             {encodeResult && (
               <div className="transform-actions">
@@ -318,34 +413,34 @@ export default function UrlParse() {
                   className={`copy-button${copiedId === 'encode' ? ' copied' : ''}`}
                   onClick={() => handleCopy(encodeResult, 'encode')}
                 >
-                  {copiedId === 'encode' ? '已复制' : '复制结果'}
+                  {copiedId === 'encode' ? copy.encode.copied : copy.encode.copy}
                 </button>
               </div>
             )}
           </article>
           <article className="transform-card">
             <header className="transform-header">
-              <h3>URL Decode</h3>
+              <h3>{copy.decode.title}</h3>
             </header>
             <label className="transform-label" htmlFor="url-decode-input">
-              URL 编码文本
+              {copy.decode.sourceLabel}
             </label>
             <textarea
               id="url-decode-input"
               className="transform-textarea"
-              placeholder="输入 URL 编码内容，会尝试自动解码"
+              placeholder={copy.decode.sourcePlaceholder}
               value={decodeSource}
               onChange={handleDecodeChange}
             />
             <label className="transform-label" htmlFor="url-decode-output">
-              解码结果
+              {copy.decode.resultLabel}
             </label>
             <textarea
               id="url-decode-output"
               className={`transform-textarea${decodeError ? ' has-error' : ''}`}
               value={decodeResult}
               readOnly
-              placeholder="解码结果会显示在这里"
+              placeholder={copy.decode.resultPlaceholder}
             />
             {decodeResult && !decodeError && (
               <div className="transform-actions">
@@ -354,7 +449,7 @@ export default function UrlParse() {
                   className={`copy-button${copiedId === 'decode' ? ' copied' : ''}`}
                   onClick={() => handleCopy(decodeResult, 'decode')}
                 >
-                  {copiedId === 'decode' ? '已复制' : '复制结果'}
+                  {copiedId === 'decode' ? copy.decode.copied : copy.decode.copy}
                 </button>
               </div>
             )}
@@ -364,15 +459,15 @@ export default function UrlParse() {
       </section>
       <section className="section">
         <header className="section-header">
-          <h2>URL 调试建议</h2>
-          <p>结合查询参数与编码工具，可以快速验证接口回调、OAuth 跳转或日志中的可疑链接。</p>
+          <h2>{copy.tips.title}</h2>
+          <p>{copy.tips.description}</p>
         </header>
         <ul>
-          <li>若输入缺少协议，工具会自动补全 https:// 方便解析，可在“协议”栏确认真实协议。</li>
-          <li>点击查询参数右侧的复制按钮即可复制值，便于调试签名或粘贴到 Postman、cURL。</li>
-          <li>对疑似被编码多次的字符串，可先使用 URL Decode 工具逐次解码再观察结果。</li>
+          {copy.tips.bullets.map((bullet) => (
+            <li key={bullet}>{bullet}</li>
+          ))}
         </ul>
-        <p className="hint">处理敏感链接时请注意隐藏令牌或签名参数，避免在分享截图时泄露信息。</p>
+        <p className="hint">{copy.tips.hint}</p>
       </section>
     </main>
   );

@@ -1,5 +1,29 @@
 import { ChangeEvent, FormEvent, useEffect, useRef, useState } from 'react';
 import QRCode from 'qrcode';
+import { useI18n } from './i18n/index';
+
+type QRGeneratorCopy = {
+  title: string;
+  description: string;
+  form: {
+    inputLabel: string;
+    placeholder: string;
+    autoGenerateLabel: string;
+    submitLabel: string;
+    errors: {
+      general: string;
+      empty: string;
+    };
+  };
+  sections: {
+    guide: {
+      title: string;
+      description: string;
+      steps: string[];
+      hint: string;
+    };
+  };
+};
 
 export default function QRGenerator() {
   const [formValue, setFormValue] = useState<string>('');
@@ -7,6 +31,8 @@ export default function QRGenerator() {
   const [error, setError] = useState<string>('');
   const [autoGenerate, setAutoGenerate] = useState<boolean>(true);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const { translations } = useI18n();
+  const copy = translations.tools.qrGenerator.page as QRGeneratorCopy;
 
   useEffect(() => {
     if (!qrValue) {
@@ -31,14 +57,14 @@ export default function QRGenerator() {
         light: '#ffffff',
       },
       errorCorrectionLevel: 'M',
-    })
+      })
       .then(() => {
         setError('');
       })
       .catch(() => {
-        setError('二维码生成失败，请重试');
+        setError(copy.form.errors.general);
       });
-  }, [qrValue]);
+  }, [copy.form.errors.general, qrValue]);
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -48,7 +74,7 @@ export default function QRGenerator() {
 
     const trimmed = formValue.trim();
     if (!trimmed) {
-      setError('请输入要编码的内容');
+      setError(copy.form.errors.empty);
       setQrValue('');
       return;
     }
@@ -77,18 +103,16 @@ export default function QRGenerator() {
 
   return (
     <main className="card">
-      <h1>二维码生成器：在线创建高清 QR Code</h1>
-      <p className="card-description">
-        在线二维码生成器支持链接、文本、名片和 Wi-Fi 等内容，一键生成高清二维码并可下载 PNG 图片，适合海报、打印与分享场景。
-      </p>
+      <h1>{copy.title}</h1>
+      <p className="card-description">{copy.description}</p>
       <form onSubmit={handleSubmit} className="form" autoComplete="off">
-        <label htmlFor="url-input">请输入内容：</label>
+        <label htmlFor="url-input">{copy.form.inputLabel}</label>
         <input
           id="url-input"
           type="text"
           value={formValue}
           onChange={handleInputChange}
-          placeholder="https://example.com 或任意文本"
+          placeholder={copy.form.placeholder}
           required
         />
         {error && <p className="form-error">{error}</p>}
@@ -104,10 +128,10 @@ export default function QRGenerator() {
               }
             }}
           />
-          自动生成二维码
+          {copy.form.autoGenerateLabel}
         </label>
         <button type="submit" disabled={autoGenerate}>
-          生成二维码
+          {copy.form.submitLabel}
         </button>
       </form>
       <div className={`qr-output${qrValue ? '' : ' empty'}`}>
@@ -115,15 +139,15 @@ export default function QRGenerator() {
       </div>
       <section className="section">
         <header className="section-header">
-          <h2>如何快速生成二维码</h2>
-          <p>输入任意文本、链接或数据，选择是否自动生成并立即获取高分辨率二维码。</p>
+          <h2>{copy.sections.guide.title}</h2>
+          <p>{copy.sections.guide.description}</p>
         </header>
         <ol>
-          <li>在输入框粘贴网址、手机号、Wi-Fi 配置或自定义文本。</li>
-          <li>保持“自动生成二维码”开启可实时预览，关闭后可在编辑完毕时手动点击按钮。</li>
-          <li>右键或长按二维码即可保存 PNG 图片，用于海报、名片或宣传物料。</li>
+          {copy.sections.guide.steps.map((step) => (
+            <li key={step}>{step}</li>
+          ))}
         </ol>
-        <p className="hint">建议在生成大型宣传物料前进行扫码测试，确保文本内容准确无误。</p>
+        <p className="hint">{copy.sections.guide.hint}</p>
       </section>
     </main>
   );

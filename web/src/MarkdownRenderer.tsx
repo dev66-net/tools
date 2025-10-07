@@ -4,6 +4,7 @@ import type { Components } from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { useLocation } from 'react-router-dom';
 import mermaid from 'mermaid';
+import { useI18n } from './i18n/index';
 
 const PRINT_STORAGE_KEY = 'markdown-renderer:print-payload';
 
@@ -22,6 +23,8 @@ type PrintPayload = {
 
 type MermaidDiagramProps = {
   code: string;
+  ariaLabel: string;
+  errorMessage: string;
   onRender?: () => void;
 };
 
@@ -96,7 +99,7 @@ function remarkLongDashHr() {
   };
 }
 
-function MermaidDiagram({ code, onRender }: MermaidDiagramProps) {
+function MermaidDiagram({ code, ariaLabel, errorMessage, onRender }: MermaidDiagramProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const diagramIdRef = useRef<string>();
   const [error, setError] = useState<Error | null>(null);
@@ -131,7 +134,7 @@ function MermaidDiagram({ code, onRender }: MermaidDiagramProps) {
         if (cancelled) {
           return;
         }
-        setError(renderError instanceof Error ? renderError : new Error('无法渲染 Mermaid 图表'));
+        setError(renderError instanceof Error ? renderError : new Error(errorMessage));
         onRender?.();
       }
     };
@@ -154,44 +157,8 @@ function MermaidDiagram({ code, onRender }: MermaidDiagramProps) {
     );
   }
 
-  return <div ref={containerRef} className="markdown-mermaid" role="img" aria-label="Mermaid 图表" />;
+  return <div ref={containerRef} className="markdown-mermaid" role="img" aria-label={ariaLabel} />;
 }
-
-const sampleMarkdown = `# Markdown 示例
-
-欢迎使用 **Markdown 渲染器**！以下内容涵盖常见语法：
-
-- 列表项
-- [链接](https://dev66.net)
-- \`行内代码\`
-
-\`\`\`ts
-function greet(name: string) {
-  return \`你好，\${name}\`;
-}
-\`\`\`
-
-| 阶段 | 说明 |
-| ---- | ---- |
-| 规划 | 明确目标 |
-| 开发 | 实现功能 |
-| 验证 | 手动测试 |
-
-> 支持 GFM 扩展，例如表格与任务列表。
-
-\`\`\`mermaid
-sequenceDiagram
-  participant User
-  participant Renderer
-  User->>Renderer: 输入 Markdown
-  Renderer-->>User: 展示预览
-  User->>Renderer: 点击打印
-  Renderer-->>User: 打开打印视图
-\`\`\`
-
-- [ ] 待完成事项
-- [x] 已完成事项
-`;
 
 const printStyles = `
   :root {
@@ -255,6 +222,8 @@ const printStyles = `
 `;
 
 export default function MarkdownRenderer() {
+  const { translations } = useI18n();
+  const copy = translations.tools.markdownRenderer.page as MarkdownRendererCopy;
   const location = useLocation();
   const isPrintMode = useMemo(() => {
     const params = new URLSearchParams(location.search);
@@ -270,6 +239,8 @@ export default function MarkdownRenderer() {
   }, [location.search]);
 
   const printPayload = useMemo(() => (isPrintMode ? readPrintPayload() : null), [isPrintMode]);
+
+  const sampleMarkdown = copy.sample;
 
   const [source, setSource] = useState<string>(() => {
     if (isPrintMode) {
@@ -380,7 +351,14 @@ export default function MarkdownRenderer() {
           const match = /language-([a-z0-9]+)/i.exec(className ?? '');
 
           if (!inline && match?.[1] === 'mermaid') {
-            return <MermaidDiagram code={text} onRender={handleMermaidRender} />;
+            return (
+              <MermaidDiagram
+                code={text}
+                ariaLabel={copy.mermaid.ariaLabel}
+                errorMessage={copy.mermaid.renderError}
+                onRender={handleMermaidRender}
+              />
+            );
           }
 
           if (!inline && match) {
@@ -398,7 +376,7 @@ export default function MarkdownRenderer() {
           );
         },
       }) satisfies Components,
-    [handleMermaidRender]
+    [copy.mermaid.ariaLabel, copy.mermaid.renderError, handleMermaidRender]
   );
 
   const handleSourceChange = useCallback((event: ChangeEvent<HTMLTextAreaElement>) => {
@@ -407,7 +385,7 @@ export default function MarkdownRenderer() {
 
   const handleFillSample = useCallback(() => {
     setSource(sampleMarkdown);
-  }, []);
+  }, [sampleMarkdown]);
 
   const handleClear = useCallback(() => {
     setSource('');
@@ -443,7 +421,7 @@ export default function MarkdownRenderer() {
         if (fallbackWindow) {
           const html = previewRef.current.innerHTML;
           fallbackWindow.document.write(
-            `<!doctype html><html><head><meta charset="utf-8" /><title>Markdown 预览打印</title><style>${printStyles}</style></head><body>${html}</body></html>`
+            `<!doctype html><html><head><meta charset="utf-8" /><title>${copy.printFallback.windowTitle}</title><style>${printStyles}</style></head><body>${html}</body></html>`
           );
           fallbackWindow.document.close();
           fallbackWindow.focus();
@@ -458,13 +436,13 @@ export default function MarkdownRenderer() {
     }
 
     printWindow.focus();
-  }, [hasContent, source, useGfm]);
+  }, [copy.printFallback.windowTitle, hasContent, source, useGfm]);
 
   if (isPrintMode) {
     return (
       <main className="markdown-print" aria-labelledby="markdown-print-title">
         <h1 id="markdown-print-title" className="visually-hidden">
-          Markdown 渲染预览
+          {copy.printView.heading}
         </h1>
         <div ref={previewRef} className="markdown-preview markdown-preview--print" aria-live="polite">
           {hasContent ? (
@@ -472,7 +450,7 @@ export default function MarkdownRenderer() {
               {source}
             </ReactMarkdown>
           ) : (
-            <p className="markdown-empty">没有可打印的内容。</p>
+            <p className="markdown-empty">{copy.printView.empty}</p>
           )}
         </div>
       </main>
@@ -481,28 +459,30 @@ export default function MarkdownRenderer() {
 
   return (
     <main className="card markdown-card">
-      <h1>Markdown 渲染器：在线预览与导出</h1>
-      <p className="card-description">
-        Markdown 渲染器支持 GitHub 风格语法、实时双栏预览、代码高亮与一键打印，适合撰写 README、会议纪要和产品文档。
-      </p>
+      <h1>{copy.title}</h1>
+      <p className="card-description">{copy.description}</p>
 
       <section className="section">
         <div className="markdown-grid">
           <div className="markdown-panel">
             <header className="markdown-panel-header">
               <div>
-                <h2>Markdown 输入</h2>
-                <p>支持标题、列表、表格、代码块等常用语法。</p>
+                <h2>{copy.input.title}</h2>
+                <p>{copy.input.description}</p>
               </div>
-              <span className="markdown-count">{hasContent ? `${source.length} 字符` : '暂无内容'}</span>
+              <span className="markdown-count">
+                {hasContent
+                  ? copy.input.charCount.template.replace('{count}', String(source.length))
+                  : copy.input.charCount.empty}
+              </span>
             </header>
             <textarea
               id="markdown-source"
               className="markdown-textarea"
               value={source}
               onChange={handleSourceChange}
-              placeholder="在此输入 Markdown 内容..."
-              aria-label="Markdown 输入区域"
+              placeholder={copy.input.placeholder}
+              aria-label={copy.input.ariaLabel}
             />
             <div className="markdown-toolbar">
               <label className="markdown-checkbox">
@@ -511,14 +491,14 @@ export default function MarkdownRenderer() {
                   checked={useGfm}
                   onChange={(event) => setUseGfm(event.target.checked)}
                 />
-                启用 GFM 扩展（表格、任务列表等）
+                {copy.input.gfmLabel}
               </label>
               <div className="markdown-toolbar-actions">
                 <button type="button" className="secondary" onClick={handleFillSample}>
-                  填充示例
+                  {copy.input.buttons.sample}
                 </button>
                 <button type="button" className="secondary" onClick={handleClear} disabled={!source}>
-                  清空
+                  {copy.input.buttons.clear}
                 </button>
               </div>
             </div>
@@ -527,16 +507,16 @@ export default function MarkdownRenderer() {
           <div className="markdown-panel">
             <header className="markdown-panel-header">
               <div>
-                <h2>实时预览</h2>
-                <p>刷新延迟低于 50ms，所见即所得。</p>
+                <h2>{copy.preview.title}</h2>
+                <p>{copy.preview.description}</p>
               </div>
               <button
                 type="button"
                 onClick={handlePrint}
                 disabled={!hasContent}
-                aria-label="打印 Markdown 预览"
+                aria-label={copy.preview.printAriaLabel}
               >
-                打印
+                {copy.preview.printButton}
               </button>
             </header>
             <div ref={previewRef} className="markdown-preview" aria-live="polite">
@@ -545,7 +525,7 @@ export default function MarkdownRenderer() {
                   {source}
                 </ReactMarkdown>
               ) : (
-                <p className="markdown-empty">输入 Markdown 内容以查看实时预览。</p>
+                <p className="markdown-empty">{copy.preview.empty}</p>
               )}
             </div>
           </div>
@@ -553,16 +533,62 @@ export default function MarkdownRenderer() {
       </section>
       <section className="section">
         <header className="section-header">
-          <h2>高效整理 Markdown 文档</h2>
-          <p>结合示例模板与打印导出，可快速生成可分享的排版成品。</p>
+          <h2>{copy.section.title}</h2>
+          <p>{copy.section.description}</p>
         </header>
         <ul>
-          <li>通过启用 GFM 支持表格、任务列表和删除线，让项目文档与 GitHub 渲染保持一致。</li>
-          <li>点击“打印”可将预览窗口直接导出为 PDF，适用于归档会议纪要或设计说明。</li>
-          <li>建议定期复制 Markdown 原文备份至版本库，配合本工具预览即可即时校验排版效果。</li>
+          {copy.section.bullets.map((bullet) => (
+            <li key={bullet}>{bullet}</li>
+          ))}
         </ul>
-        <p className="hint">所有渲染在本地完成，适用于内网环境或处理未公开的项目文档。</p>
+        <p className="hint">{copy.section.hint}</p>
       </section>
     </main>
   );
 }
+
+type MarkdownRendererCopy = {
+  title: string;
+  description: string;
+  sample: string;
+  input: {
+    title: string;
+    description: string;
+    placeholder: string;
+    ariaLabel: string;
+    charCount: {
+      template: string;
+      empty: string;
+    };
+    gfmLabel: string;
+    buttons: {
+      sample: string;
+      clear: string;
+    };
+  };
+  preview: {
+    title: string;
+    description: string;
+    empty: string;
+    printButton: string;
+    printAriaLabel: string;
+  };
+  printView: {
+    heading: string;
+    windowTitle: string;
+    empty: string;
+  };
+  printFallback: {
+    windowTitle: string;
+  };
+  mermaid: {
+    ariaLabel: string;
+    renderError: string;
+  };
+  section: {
+    title: string;
+    description: string;
+    bullets: string[];
+    hint: string;
+  };
+};

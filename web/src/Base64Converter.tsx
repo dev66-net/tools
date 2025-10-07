@@ -1,5 +1,6 @@
 import { ChangeEvent, useMemo, useState } from 'react';
 import { bytesToSpacedHex, bytesToUtf8, utf8ToBytes } from './utils/bytes.ts';
+import { useI18n } from './i18n/index';
 
 type Base64Variant = 'standard' | 'standard-no-pad' | 'url' | 'url-no-pad';
 
@@ -11,22 +12,71 @@ type EncodeResult = {
 type DecodeResult = {
   text: string;
   hex: string;
-  variantLabel: string;
+  variant: DecodedVariant | null;
   addedPadding: number;
   error: string;
 };
 
-const base64VariantOptions: { value: Base64Variant; label: string; hint: string }[] = [
-  { value: 'standard', label: '标准 Base64', hint: '使用 + / 字符，包含补位 = 号' },
-  { value: 'standard-no-pad', label: '标准（无补位）', hint: '使用 + / 字符，不输出尾部 =' },
-  { value: 'url', label: 'URL Safe', hint: '使用 - _ 字符，包含补位 =' },
-  { value: 'url-no-pad', label: 'URL Safe（无补位）', hint: '使用 - _ 字符，不输出尾部 =' },
-];
+type DecodedVariant = 'standard' | 'standard-no-pad' | 'url' | 'url-no-pad';
+
+type Base64ConverterCopy = {
+  title: string;
+  description: string;
+  encode: {
+    title: string;
+    description: string;
+    inputLabel: string;
+    placeholder: string;
+    variantLabel: string;
+    variants: Record<Base64Variant, { label: string; hint: string }>;
+    byteLengthLabel: string;
+    resultLabel: string;
+    resultPlaceholder: string;
+    buttons: {
+      copy: string;
+      copied: string;
+      clearInput: string;
+    };
+  };
+  decode: {
+    title: string;
+    description: string;
+    inputLabel: string;
+    placeholder: string;
+    errors: {
+      invalidCharacter: string;
+      invalidLength: string;
+      decodeFailed: string;
+    };
+    status: {
+      waiting: string;
+      identified: string;
+      addedPadding: string;
+    };
+    resultLabel: string;
+    resultPlaceholder: string;
+    hexLabel: string;
+    buttons: {
+      copy: string;
+      copied: string;
+      clearInput: string;
+    };
+    variantLabels: Record<DecodedVariant, string>;
+  };
+  section: {
+    title: string;
+    description: string;
+    bullets: string[];
+    hint: string;
+  };
+};
+
+const base64VariantOrder: Base64Variant[] = ['standard', 'standard-no-pad', 'url', 'url-no-pad'];
 
 const EMPTY_DECODE_RESULT: DecodeResult = {
   text: '',
   hex: '',
-  variantLabel: '',
+  variant: null,
   addedPadding: 0,
   error: '',
 };
@@ -66,16 +116,23 @@ function encodeBase64(input: string, variant: Base64Variant): EncodeResult {
   return { output: normalized, byteLength: bytes.length };
 }
 
-function decodeBase64(input: string): DecodeResult {
+function decodeBase64(
+  input: string,
+  messages: {
+    invalidCharacter: string;
+    invalidLength: string;
+    decodeFailed: string;
+  }
+): DecodeResult {
   const trimmed = input.trim();
   if (!trimmed) {
-    return EMPTY_DECODE_RESULT;
+    return { ...EMPTY_DECODE_RESULT };
   }
   const compact = trimmed.replace(/\s+/g, '');
   if (/[^0-9a-zA-Z\-_/+=]/u.test(compact)) {
     return {
       ...EMPTY_DECODE_RESULT,
-      error: '检测到非法字符，请确认输入是否为 Base64 编码内容。',
+      error: messages.invalidCharacter,
     };
   }
 
@@ -88,7 +145,7 @@ function decodeBase64(input: string): DecodeResult {
   if (remainder === 1) {
     return {
       ...EMPTY_DECODE_RESULT,
-      error: '长度不符合 Base64 要求，缺失的字符数量无法补齐。',
+      error: messages.invalidLength,
     };
   }
   if (remainder > 0) {
@@ -103,18 +160,18 @@ function decodeBase64(input: string): DecodeResult {
       buffer[i] = binary.charCodeAt(i);
     }
     const text = bytesToUtf8(buffer);
-    const variantLabel = isUrl
+    const variant: DecodedVariant = isUrl
       ? hasPadding || addedPadding > 0
-        ? 'URL Safe Base64'
-        : 'URL Safe Base64（自动补全 =）'
+        ? 'url'
+        : 'url-no-pad'
       : hasPadding || addedPadding > 0
-        ? '标准 Base64'
-        : '标准 Base64（自动补全 =）';
+        ? 'standard'
+        : 'standard-no-pad';
 
     return {
       text,
       hex: bytesToSpacedHex(buffer, { uppercase: true, groupSize: 1, separator: ' ' }),
-      variantLabel,
+      variant,
       addedPadding,
       error: '',
     };
@@ -122,7 +179,7 @@ function decodeBase64(input: string): DecodeResult {
     console.error('Failed to decode Base64', error);
     return {
       ...EMPTY_DECODE_RESULT,
-      error: '无法解码该 Base64 字符串，请确认内容是否正确。',
+      error: messages.decodeFailed,
     };
   }
 }
@@ -158,14 +215,27 @@ async function copyToClipboard(text: string): Promise<boolean> {
 }
 
 export default function Base64Converter() {
+  const { translations } = useI18n();
+  const copy = translations.tools.base64Converter.page as Base64ConverterCopy;
   const [encodeInput, setEncodeInput] = useState('');
   const [variant, setVariant] = useState<Base64Variant>('standard');
   const [decodeInput, setDecodeInput] = useState('');
   const [encodeCopied, setEncodeCopied] = useState(false);
   const [decodeCopied, setDecodeCopied] = useState(false);
 
+  const variantOptions = useMemo(
+    () =>
+      base64VariantOrder.map((value) => ({
+        value,
+        label: copy.encode.variants[value].label,
+        hint: copy.encode.variants[value].hint,
+      })),
+    [copy.encode.variants]
+  );
+
   const encodeResult = useMemo(() => encodeBase64(encodeInput, variant), [encodeInput, variant]);
-  const decodeResult = useMemo(() => decodeBase64(decodeInput), [decodeInput]);
+  const decodeErrors = copy.decode.errors;
+  const decodeResult = useMemo(() => decodeBase64(decodeInput, decodeErrors), [decodeErrors, decodeInput]);
 
   const handleEncodeChange = (event: ChangeEvent<HTMLTextAreaElement>) => {
     setEncodeInput(event.target.value);
@@ -200,98 +270,111 @@ export default function Base64Converter() {
 
   return (
     <main className="card">
-      <h1>Base64 编解码器：支持标准与 URL Safe</h1>
-      <p className="card-description">
-        Base64 编解码器支持标准与 URL Safe 变体，自动识别补位并展示十六进制视图，帮助定位接口字段或附件数据问题。
-      </p>
+      <h1>{copy.title}</h1>
+      <p className="card-description">{copy.description}</p>
       <section className="section">
         <header className="section-header">
-          <h2>Base64 编码</h2>
-          <p>输入文本后自动使用 UTF-8 编码为二进制，再转换为 Base64。</p>
+          <h2>{copy.encode.title}</h2>
+          <p>{copy.encode.description}</p>
         </header>
-        <label htmlFor="base64-encode-input">原始文本</label>
+        <label htmlFor="base64-encode-input">{copy.encode.inputLabel}</label>
         <textarea
           id="base64-encode-input"
           value={encodeInput}
           onChange={handleEncodeChange}
           rows={5}
-          placeholder="输入要编码的文本"
+          placeholder={copy.encode.placeholder}
         />
         <div className="form-inline">
-          <label htmlFor="base64-variant">输出格式</label>
+          <label htmlFor="base64-variant">{copy.encode.variantLabel}</label>
           <select id="base64-variant" value={variant} onChange={handleVariantChange}>
-            {base64VariantOptions.map((option) => (
+            {variantOptions.map((option) => (
               <option key={option.value} value={option.value}>
                 {option.label} — {option.hint}
               </option>
             ))}
           </select>
-          <span className="hint">字节数：{encodeResult.byteLength}</span>
+          <span className="hint">
+            {copy.encode.byteLengthLabel.replace('{count}', String(encodeResult.byteLength))}
+          </span>
         </div>
-        <label htmlFor="base64-encode-output">编码结果</label>
-        <textarea id="base64-encode-output" value={encodeResult.output} readOnly rows={6} placeholder="编码结果" />
+        <label htmlFor="base64-encode-output">{copy.encode.resultLabel}</label>
+        <textarea
+          id="base64-encode-output"
+          value={encodeResult.output}
+          readOnly
+          rows={6}
+          placeholder={copy.encode.resultPlaceholder}
+        />
         <div className="actions">
           <button type="button" className="secondary" onClick={handleCopyEncode} disabled={!encodeResult.output}>
-            {encodeCopied ? '已复制' : '复制编码'}
+            {encodeCopied ? copy.encode.buttons.copied : copy.encode.buttons.copy}
           </button>
           <button type="button" className="secondary" onClick={() => setEncodeInput('')}>
-            清空输入
+            {copy.encode.buttons.clearInput}
           </button>
         </div>
       </section>
       <section className="section">
         <header className="section-header">
-          <h2>Base64 解码</h2>
-          <p>自动识别标准或 URL Safe 变体，必要时补齐缺失的补位。</p>
+          <h2>{copy.decode.title}</h2>
+          <p>{copy.decode.description}</p>
         </header>
-        <label htmlFor="base64-decode-input">Base64 字符串</label>
+        <label htmlFor="base64-decode-input">{copy.decode.inputLabel}</label>
         <textarea
           id="base64-decode-input"
           value={decodeInput}
           onChange={handleDecodeChange}
           rows={6}
-          placeholder="粘贴或输入 Base64 编码文本"
+          placeholder={copy.decode.placeholder}
         />
         {decodeResult.error ? (
           <p className="error">{decodeResult.error}</p>
         ) : (
           <p className="hint">
-            {decodeResult.variantLabel ? `已识别为：${decodeResult.variantLabel}` : '等待输入'}
-            {decodeResult.addedPadding > 0 ? `（已自动补全 ${decodeResult.addedPadding} 个 =）` : ''}
+            {decodeResult.variant
+              ? copy.decode.status.identified.replace(
+                  '{variant}',
+                  copy.decode.variantLabels[decodeResult.variant]
+                )
+              : copy.decode.status.waiting}
+            {decodeResult.addedPadding > 0
+              ? copy.decode.status.addedPadding.replace('{count}', String(decodeResult.addedPadding))
+              : ''}
           </p>
         )}
-        <label htmlFor="base64-decoded-text">解码文本</label>
+        <label htmlFor="base64-decoded-text">{copy.decode.resultLabel}</label>
         <textarea
           id="base64-decoded-text"
           value={decodeResult.text}
           readOnly
           rows={5}
-          placeholder="解码后的纯文本"
+          placeholder={copy.decode.resultPlaceholder}
         />
         <div className="decoded-hex">
-          <span className="hint">十六进制：</span>
+          <span className="hint">{copy.decode.hexLabel}</span>
           <pre>{decodeResult.hex || '—'}</pre>
         </div>
         <div className="actions">
           <button type="button" className="secondary" onClick={handleCopyDecode} disabled={!decodeResult.text}>
-            {decodeCopied ? '已复制' : '复制文本'}
+            {decodeCopied ? copy.decode.buttons.copied : copy.decode.buttons.copy}
           </button>
           <button type="button" className="secondary" onClick={() => setDecodeInput('')}>
-            清空输入
+            {copy.decode.buttons.clearInput}
           </button>
         </div>
       </section>
       <section className="section">
         <header className="section-header">
-          <h2>Base64 使用技巧</h2>
-          <p>结合十六进制与补位提示，快速判断数据来源并校验传输格式。</p>
+          <h2>{copy.section.title}</h2>
+          <p>{copy.section.description}</p>
         </header>
         <ul>
-          <li>在调试接口响应时，可粘贴 Base64 字段并对照十六进制输出判断文件类型。</li>
-          <li>URL Safe 变体通常应用于 JWT、URL 参数，解码前无需手动替换字符，工具会自动处理。</li>
-          <li>若遇到长度错误，查看提示的补位数量，确认上游是否缺少“=”导致传输异常。</li>
+          {copy.section.bullets.map((bullet) => (
+            <li key={bullet}>{bullet}</li>
+          ))}
         </ul>
-        <p className="hint">所有转换操作均在本地执行，可放心处理包含令牌或私密信息的内容。</p>
+        <p className="hint">{copy.section.hint}</p>
       </section>
     </main>
   );

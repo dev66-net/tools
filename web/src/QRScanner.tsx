@@ -1,9 +1,45 @@
 import { ChangeEvent, ClipboardEvent, DragEvent, useCallback, useRef, useState } from 'react';
 import jsQR from 'jsqr';
+import { useI18n } from './i18n/index';
 
 type ProcessSource = {
   file: File;
   name: string;
+};
+
+type QRScannerCopy = {
+  title: string;
+  description: string;
+  dropzone: {
+    instruction: string;
+    chooseButton: string;
+    status: string;
+  };
+  sources: {
+    pastedImage: string;
+  };
+  previewLabel: string;
+  previewAlt: string;
+  result: {
+    heading: string;
+    placeholder: string;
+    copyButtonLabel: string;
+  };
+  errors: {
+    notImage: string;
+    decodeFailed: string;
+    generic: string;
+    copy: string;
+    canvasUnavailable: string;
+    contextUnavailable: string;
+    fileRead: string;
+    fileReadGeneric: string;
+  };
+  tips: {
+    title: string;
+    description: string;
+    bullets: string[];
+  };
 };
 
 const MAX_DIMENSION = 1024;
@@ -27,6 +63,10 @@ const copyIcon = (
   </svg>
 );
 
+function formatMessage(template: string, replacements: Record<string, string>): string {
+  return template.replace(/\{(\w+)\}/gu, (_, key: string) => replacements[key] ?? '');
+}
+
 export default function QRScanner() {
   const [previewUrl, setPreviewUrl] = useState<string>('');
   const [result, setResult] = useState<string>('');
@@ -35,6 +75,8 @@ export default function QRScanner() {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const offscreenCanvasRef = useRef<HTMLCanvasElement | null>(null);
+  const { translations } = useI18n();
+  const copy = translations.tools.qrScanner.page as QRScannerCopy;
 
   const decodeImageFromCanvas = useCallback(
     (canvas: HTMLCanvasElement, baseImageData?: ImageData) => {
@@ -98,46 +140,49 @@ export default function QRScanner() {
           if (typeof reader.result === 'string') {
             resolve(reader.result);
           } else {
-            reject(new Error('无法读取文件，请重试'));
+            reject(new Error(copy.errors.fileRead));
           }
         };
-        reader.onerror = () => reject(new Error('读取文件失败，请重试'));
+        reader.onerror = () => reject(new Error(copy.errors.fileReadGeneric));
         reader.readAsDataURL(file);
       }),
-    []
+    [copy.errors.fileRead, copy.errors.fileReadGeneric]
   );
 
-  const drawImageToCanvas = useCallback(async (dataUrl: string) => {
-    const image = new Image();
-    image.src = dataUrl;
-    await image.decode();
+  const drawImageToCanvas = useCallback(
+    async (dataUrl: string) => {
+      const image = new Image();
+      image.src = dataUrl;
+      await image.decode();
 
-    const canvas = canvasRef.current;
-    if (!canvas) {
-      throw new Error('处理画布不可用');
-    }
+      const canvas = canvasRef.current;
+      if (!canvas) {
+        throw new Error(copy.errors.canvasUnavailable);
+      }
 
-    const ctx = canvas.getContext('2d', { willReadFrequently: true });
-    if (!ctx) {
-      throw new Error('无法获取绘图上下文');
-    }
+      const ctx = canvas.getContext('2d', { willReadFrequently: true });
+      if (!ctx) {
+        throw new Error(copy.errors.contextUnavailable);
+      }
 
-    const scale = Math.min(1, MAX_DIMENSION / Math.max(image.width, image.height));
-    const width = Math.max(1, Math.round(image.width * scale));
-    const height = Math.max(1, Math.round(image.height * scale));
+      const scale = Math.min(1, MAX_DIMENSION / Math.max(image.width, image.height));
+      const width = Math.max(1, Math.round(image.width * scale));
+      const height = Math.max(1, Math.round(image.height * scale));
 
-    canvas.width = width;
-    canvas.height = height;
-    ctx.clearRect(0, 0, width, height);
-    ctx.drawImage(image, 0, 0, width, height);
+      canvas.width = width;
+      canvas.height = height;
+      ctx.clearRect(0, 0, width, height);
+      ctx.drawImage(image, 0, 0, width, height);
 
-    return ctx.getImageData(0, 0, width, height);
-  }, []);
+      return ctx.getImageData(0, 0, width, height);
+    },
+    [copy.errors.canvasUnavailable, copy.errors.contextUnavailable]
+  );
 
   const processSource = useCallback(
     async ({ file, name }: ProcessSource) => {
       if (!file.type.startsWith('image/')) {
-        setError('请选择图片文件');
+        setError(copy.errors.notImage);
         return;
       }
 
@@ -152,25 +197,25 @@ export default function QRScanner() {
         const imageData = await drawImageToCanvas(dataUrl);
         const canvas = canvasRef.current;
         if (!canvas) {
-          throw new Error('处理画布不可用');
+          throw new Error(copy.errors.canvasUnavailable);
         }
 
         const decoded = decodeImageFromCanvas(canvas, imageData);
 
         if (!decoded) {
-          setError(`未能识别二维码：${name}`);
+          setError(formatMessage(copy.errors.decodeFailed, { name }));
           return;
         }
 
         setResult(decoded);
       } catch (processingError) {
-        const message = processingError instanceof Error ? processingError.message : '识别失败，请重试';
-        setError(message);
+        const message = processingError instanceof Error ? processingError.message : '';
+        setError(message || copy.errors.generic);
       } finally {
         setIsProcessing(false);
       }
     },
-    [decodeImageFromCanvas, drawImageToCanvas, readFileAsDataUrl]
+    [copy.errors.canvasUnavailable, copy.errors.decodeFailed, copy.errors.generic, copy.errors.notImage, decodeImageFromCanvas, drawImageToCanvas, readFileAsDataUrl]
   );
 
   const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
@@ -200,7 +245,7 @@ export default function QRScanner() {
       if (item.type.startsWith('image/')) {
         const file = item.getAsFile();
         if (file) {
-          void processSource({ file, name: '粘贴图片' });
+          void processSource({ file, name: copy.sources.pastedImage });
           event.preventDefault();
           break;
         }
@@ -219,17 +264,15 @@ export default function QRScanner() {
     try {
       await navigator.clipboard.writeText(result);
     } catch (copyError) {
-      const message = copyError instanceof Error ? copyError.message : '复制失败';
-      setError(message);
+      const message = copyError instanceof Error ? copyError.message : '';
+      setError(message || copy.errors.copy);
     }
   };
 
   return (
     <main className="card">
-      <h1>二维码识别器：上传图片或粘贴二维码</h1>
-      <p className="card-description">
-        二维码识别器支持拖拽、粘贴或上传图片，自动旋转校正模糊二维码，快速提取二维码内的链接、文本或指令内容。
-      </p>
+      <h1>{copy.title}</h1>
+      <p className="card-description">{copy.description}</p>
       <section className="scanner">
         <div
           className="scan-dropzone"
@@ -237,25 +280,31 @@ export default function QRScanner() {
           onDragOver={(event) => event.preventDefault()}
           onPaste={handlePaste}
         >
-          <p className="scan-instruction">粘贴图片到此区域，或拖拽 / 选择本地图片文件</p>
+          <p className="scan-instruction">{copy.dropzone.instruction}</p>
           <button type="button" className="secondary" onClick={triggerFileDialog} disabled={isProcessing}>
-            选择图片
+            {copy.dropzone.chooseButton}
           </button>
-          {isProcessing && <p className="scan-status">正在识别中…</p>}
+          {isProcessing && <p className="scan-status">{copy.dropzone.status}</p>}
           {error && <p className="form-error">{error}</p>}
         </div>
 
         {previewUrl && (
           <div className="scan-preview-wrapper">
-            <span className="scan-preview-label">预览</span>
-            <img src={previewUrl} alt="二维码预览" className="scan-preview" />
+            <span className="scan-preview-label">{copy.previewLabel}</span>
+            <img src={previewUrl} alt={copy.previewAlt} className="scan-preview" />
           </div>
         )}
 
         <div className="scan-result">
           <div className="scan-result-header">
-            <span>识别结果</span>
-            <button type="button" className="icon-button" onClick={handleCopyResult} disabled={!result} aria-label="复制结果">
+            <span>{copy.result.heading}</span>
+            <button
+              type="button"
+              className="icon-button"
+              onClick={handleCopyResult}
+              disabled={!result}
+              aria-label={copy.result.copyButtonLabel}
+            >
               {copyIcon}
             </button>
           </div>
@@ -263,7 +312,7 @@ export default function QRScanner() {
             className="scan-result-text"
             value={result}
             readOnly
-            placeholder="识别内容会显示在这里"
+            placeholder={copy.result.placeholder}
           />
         </div>
 
@@ -278,13 +327,13 @@ export default function QRScanner() {
       </section>
       <section className="section">
         <header className="section-header">
-          <h2>二维码识别最佳实践</h2>
-          <p>保证图片清晰且二维码占据主体位置，可大幅提升识别成功率。</p>
+          <h2>{copy.tips.title}</h2>
+          <p>{copy.tips.description}</p>
         </header>
         <ul>
-          <li>支持直接粘贴截图或使用手机扫描二维码后发送到电脑再上传处理。</li>
-          <li>若遇到旋转或倾斜的二维码，可多次尝试，识别器会自动尝试多角度校正。</li>
-          <li>复制结果前请确认内容来源可靠，避免执行未知脚本或访问钓鱼链接。</li>
+          {copy.tips.bullets.map((tip) => (
+            <li key={tip}>{tip}</li>
+          ))}
         </ul>
       </section>
     </main>

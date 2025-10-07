@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useI18n } from './i18n/index';
 
 const sampleToken =
   'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiYWRtaW4iOnRydWUsImlhdCI6MTUxNjIzOTAyMn0.KMUFsIDTnFyg3nM1GM6H9FNFUR0f3wh7SmaqJp-QV30';
@@ -33,12 +34,12 @@ function normalizeBase64(input: string): string {
   return input.replace(/-/g, '+').replace(/_/g, '/') + padding;
 }
 
-function decodeBase64Url(part: string): string {
+function decodeBase64Url(part: string, errorMessage: string): string {
   const normalized = normalizeBase64(part);
   try {
     return atob(normalized);
   } catch {
-    throw new Error('Base64Url 解码失败');
+    throw new Error(errorMessage);
   }
 }
 
@@ -56,6 +57,8 @@ export default function JWTDecoder() {
   const [tokenInput, setTokenInput] = useState<string>(sampleToken);
   const [secret, setSecret] = useState<string>('');
   const [verification, setVerification] = useState<VerificationState>({ status: 'idle' });
+  const { translations } = useI18n();
+  const copy = translations.tools.jwtDecoder.page as JwtDecoderCopy;
 
   const decodeStatus = useMemo<DecodeStatus>(() => {
     const trimmed = tokenInput.trim();
@@ -65,14 +68,14 @@ export default function JWTDecoder() {
 
     const parts = trimmed.split('.');
     if (parts.length !== 3) {
-      return { kind: 'invalid', message: 'JWT 必须包含 header、payload、signature 三部分。' };
+      return { kind: 'invalid', message: copy.errors.parts };
     }
 
     const [encodedHeader, encodedPayload, encodedSignature] = parts;
 
     try {
-      const decodedHeader = decodeBase64Url(encodedHeader);
-      const decodedPayload = decodeBase64Url(encodedPayload);
+      const decodedHeader = decodeBase64Url(encodedHeader, copy.errors.base64);
+      const decodedPayload = decodeBase64Url(encodedPayload, copy.errors.base64);
 
       const header = JSON.parse(decodedHeader) as Record<string, unknown>;
       const payload = JSON.parse(decodedPayload) as Record<string, unknown>;
@@ -89,9 +92,9 @@ export default function JWTDecoder() {
       if (error instanceof Error) {
         return { kind: 'invalid', message: error.message };
       }
-      return { kind: 'invalid', message: '解析失败，请检查 JWT 是否有效。' };
+      return { kind: 'invalid', message: copy.errors.parse };
     }
-  }, [tokenInput]);
+  }, [copy.errors.base64, copy.errors.parse, copy.errors.parts, tokenInput]);
 
   useEffect(() => {
     let cancelled = false;
@@ -114,7 +117,10 @@ export default function JWTDecoder() {
     if (algorithm !== 'HS256') {
       setVerification({
         status: 'unsupported',
-        message: `当前算法为 ${algorithm || '未知'}，暂仅支持 HS256 验证。`,
+        message: copy.verificationMessages.unsupported.replace(
+          '{alg}',
+          algorithm || copy.result.unknownAlg
+        ),
       });
       return () => {
         cancelled = true;
@@ -122,7 +128,7 @@ export default function JWTDecoder() {
     }
 
     if (!window.crypto?.subtle) {
-      setVerification({ status: 'error', message: '当前浏览器不支持 Web Crypto API，无法校验签名。' });
+      setVerification({ status: 'error', message: copy.verificationMessages.webCryptoUnavailable });
       return () => {
         cancelled = true;
       };
@@ -146,14 +152,17 @@ export default function JWTDecoder() {
 
         if (!cancelled) {
           if (computedSignature === decodeStatus.encodedSignature) {
-            setVerification({ status: 'valid', message: '签名校验通过。' });
+            setVerification({ status: 'valid', message: copy.verificationMessages.signatureValid });
           } else {
-            setVerification({ status: 'invalid', message: '签名不匹配，请确认密钥是否正确。' });
+            setVerification({ status: 'invalid', message: copy.verificationMessages.signatureInvalid });
           }
         }
       } catch (error) {
         if (!cancelled) {
-          setVerification({ status: 'error', message: (error as Error).message || '签名验证失败。' });
+          setVerification({
+            status: 'error',
+            message: (error as Error).message || copy.verificationMessages.signatureError,
+          });
         }
       }
     };
@@ -163,34 +172,34 @@ export default function JWTDecoder() {
     return () => {
       cancelled = true;
     };
-  }, [decodeStatus, secret]);
+  }, [copy.result.unknownAlg, copy.verificationMessages.signatureError, copy.verificationMessages.signatureInvalid, copy.verificationMessages.signatureValid, copy.verificationMessages.unsupported, copy.verificationMessages.webCryptoUnavailable, decodeStatus, secret]);
 
   const renderStatusBadge = () => {
     if (decodeStatus.kind === 'empty') {
-      return <span className="jwt-status neutral">等待输入</span>;
+      return <span className="jwt-status neutral">{copy.input.statuses.empty}</span>;
     }
 
     if (decodeStatus.kind === 'invalid') {
-      return <span className="jwt-status danger">无效 JWT</span>;
+      return <span className="jwt-status danger">{copy.input.statuses.invalid}</span>;
     }
 
-    return <span className="jwt-status success">结构有效</span>;
+    return <span className="jwt-status success">{copy.input.statuses.valid}</span>;
   };
 
   const verificationBadge = () => {
     switch (verification.status) {
       case 'idle':
-        return <span className="jwt-status neutral">未校验</span>;
+        return <span className="jwt-status neutral">{copy.verificationBadges.idle}</span>;
       case 'checking':
-        return <span className="jwt-status info">校验中…</span>;
+        return <span className="jwt-status info">{copy.verificationBadges.checking}</span>;
       case 'valid':
-        return <span className="jwt-status success">签名有效</span>;
+        return <span className="jwt-status success">{copy.verificationBadges.valid}</span>;
       case 'invalid':
-        return <span className="jwt-status danger">签名无效</span>;
+        return <span className="jwt-status danger">{copy.verificationBadges.invalid}</span>;
       case 'unsupported':
-        return <span className="jwt-status warning">算法不支持</span>;
+        return <span className="jwt-status warning">{copy.verificationBadges.unsupported}</span>;
       case 'error':
-        return <span className="jwt-status danger">校验失败</span>;
+        return <span className="jwt-status danger">{copy.verificationBadges.error}</span>;
       default:
         return null;
     }
@@ -199,7 +208,7 @@ export default function JWTDecoder() {
   const verificationMessage = useMemo(() => {
     switch (verification.status) {
       case 'checking':
-        return { tone: 'info', text: '正在使用 HS256 校验签名…' };
+        return { tone: 'info', text: copy.verificationMessages.checking };
       case 'valid':
         return { tone: 'success', text: verification.message };
       case 'invalid':
@@ -211,20 +220,20 @@ export default function JWTDecoder() {
       default:
         return null;
     }
-  }, [verification]);
+  }, [copy.verificationMessages.checking, verification]);
 
   return (
     <div className="jwt-wrapper">
       <header className="jwt-header">
-        <h1>JWT 解码器：在线解析与校验</h1>
-        <p>在线解码 JSON Web Token，结构化展示 Header 与 Payload，并可输入共享密钥校验 HS256 签名和过期时间。</p>
+        <h1>{copy.title}</h1>
+        <p>{copy.description}</p>
       </header>
       <div className="jwt-columns">
         <section className="jwt-panel">
           <header className="jwt-panel-header">
             <div>
-              <h2>JWT 内容</h2>
-              <p>粘贴或输入完整的 JWT。工具会自动解析。</p>
+              <h2>{copy.input.title}</h2>
+              <p>{copy.input.description}</p>
             </div>
             {renderStatusBadge()}
           </header>
@@ -232,35 +241,38 @@ export default function JWTDecoder() {
             className="jwt-textarea"
             value={tokenInput}
             onChange={(event) => setTokenInput(event.target.value)}
-            placeholder="eyJhbGciOi..."
+            placeholder={copy.input.placeholder}
             spellCheck={false}
           />
           <div className="jwt-actions">
             <button type="button" className="secondary" onClick={() => setTokenInput(sampleToken)}>
-              填充示例
+              {copy.input.buttons.sample}
             </button>
             <button type="button" className="secondary" onClick={() => setTokenInput('')}>
-              清空
+              {copy.input.buttons.clear}
             </button>
           </div>
           <div className="jwt-secret">
             <div className="jwt-secret-header">
-              <h2>签名密钥（可选）</h2>
+              <h2>{copy.secret.title}</h2>
               {verificationBadge()}
             </div>
             <input
               type="text"
               value={secret}
               onChange={(event) => setSecret(event.target.value)}
-              placeholder="输入用于签名的共享密钥"
+              placeholder={copy.secret.placeholder}
             />
-            <div className="jwt-secret-hint">示例密钥：{sampleSecret}</div>
+            <div className="jwt-secret-hint">
+              {copy.secret.hintLabel}
+              {sampleSecret}
+            </div>
             <div className="jwt-actions">
               <button type="button" className="secondary" onClick={() => setSecret(sampleSecret)}>
-                使用示例密钥
+                {copy.secret.buttons.useSample}
               </button>
               <button type="button" className="secondary" onClick={() => setSecret('')}>
-                清空密钥
+                {copy.secret.buttons.clear}
               </button>
             </div>
             {verificationMessage ? (
@@ -272,25 +284,27 @@ export default function JWTDecoder() {
         <section className="jwt-panel">
           <header className="jwt-panel-header">
             <div>
-              <h2>解码结果</h2>
-              <p>查看 JWT Header 与 Payload 的结构化内容。</p>
+              <h2>{copy.result.title}</h2>
+              <p>{copy.result.description}</p>
             </div>
           </header>
           <div className="jwt-result">
             <div className="jwt-result-section">
               <div className="jwt-result-header">
-                <h3>Decoded Header</h3>
+                <h3>{copy.result.headerTitle}</h3>
                 {decodeStatus.kind === 'decoded' && (
-                  <span className="jwt-tag">alg: {String(decodeStatus.header.alg || '未知')}</span>
+                  <span className="jwt-tag">
+                    {copy.result.algLabel}: {String(decodeStatus.header.alg || copy.result.unknownAlg)}
+                  </span>
                 )}
               </div>
               <pre className="jwt-json">{JSON.stringify(decodeStatus.kind === 'decoded' ? decodeStatus.header : {}, null, 2)}</pre>
             </div>
             <div className="jwt-result-section">
               <div className="jwt-result-header">
-                <h3>Decoded Payload</h3>
+                <h3>{copy.result.payloadTitle}</h3>
                 {decodeStatus.kind === 'decoded' && decodeStatus.payload.exp !== undefined ? (
-                  <span className="jwt-tag">exp: {String(decodeStatus.payload.exp)}</span>
+                  <span className="jwt-tag">{copy.result.expLabel}: {String(decodeStatus.payload.exp)}</span>
                 ) : null}
               </div>
               <pre className="jwt-json">{JSON.stringify(decodeStatus.kind === 'decoded' ? decodeStatus.payload : {}, null, 2)}</pre>
@@ -298,30 +312,96 @@ export default function JWTDecoder() {
             {decodeStatus.kind === 'decoded' ? (
               <div className="jwt-result-section">
                 <div className="jwt-result-header">
-                  <h3>Signature</h3>
+                  <h3>{copy.result.signatureTitle}</h3>
                   {verificationBadge()}
                 </div>
                 <pre className="jwt-json jwt-signature">{decodeStatus.encodedSignature}</pre>
               </div>
             ) : null}
             {decodeStatus.kind === 'empty' ? (
-              <div className="jwt-placeholder">输入 JWT 后展示解码内容。</div>
+              <div className="jwt-placeholder">{copy.result.placeholder}</div>
             ) : null}
           </div>
         </section>
       </div>
       <section className="section">
         <header className="section-header">
-          <h2>JWT 调试建议</h2>
-          <p>排查登录态或接口授权问题时，可结合密钥校验快速定位异常。</p>
+          <h2>{copy.section.title}</h2>
+          <p>{copy.section.description}</p>
         </header>
         <ul>
-          <li>复制生产环境的 Token 时注意隐藏敏感字段，建议在安全的沙箱或本地环境中操作。</li>
-          <li>若签名校验失败，优先确认算法（alg）与密钥是否匹配，再比对 exp、iat 等时间字段。</li>
-          <li>可使用示例 Token 与密钥熟悉流程，再对接真实业务 Token，避免直接在生产环境测试。</li>
+          {copy.section.bullets.map((bullet) => (
+            <li key={bullet}>{bullet}</li>
+          ))}
         </ul>
-        <p className="hint">本工具不会上传任何 Token 数据，适合在调试阶段验证自定义声明或快速定位授权异常。</p>
+        <p className="hint">{copy.section.hint}</p>
       </section>
     </div>
   );
 }
+
+type JwtDecoderCopy = {
+  title: string;
+  description: string;
+  input: {
+    title: string;
+    description: string;
+    placeholder: string;
+    buttons: {
+      sample: string;
+      clear: string;
+    };
+    statuses: {
+      empty: string;
+      invalid: string;
+      valid: string;
+    };
+  };
+  secret: {
+    title: string;
+    placeholder: string;
+    hintLabel: string;
+    buttons: {
+      useSample: string;
+      clear: string;
+    };
+  };
+  verificationBadges: {
+    idle: string;
+    checking: string;
+    valid: string;
+    invalid: string;
+    unsupported: string;
+    error: string;
+  };
+  verificationMessages: {
+    checking: string;
+    unsupported: string;
+    webCryptoUnavailable: string;
+    signatureValid: string;
+    signatureInvalid: string;
+    signatureError: string;
+  };
+  errors: {
+    base64: string;
+    parts: string;
+    parse: string;
+  };
+  result: {
+    title: string;
+    description: string;
+    headerTitle: string;
+    payloadTitle: string;
+    signatureTitle: string;
+    placeholder: string;
+    algLabel: string;
+    unknownAlg: string;
+    expLabel: string;
+  };
+  section: {
+    title: string;
+    description: string;
+    bullets: string[];
+    hint: string;
+  };
+};
