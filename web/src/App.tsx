@@ -1,22 +1,17 @@
-import { Suspense, lazy, useEffect } from 'react';
-import type { ReactNode } from 'react';
-import { NavLink, Navigate, Outlet, Route, Routes } from 'react-router-dom';
-import QRGenerator from './QRGenerator.tsx';
-import QRScanner from './QRScanner.tsx';
-import UrlParse from './UrlParse.tsx';
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import type { ChangeEvent, ReactNode } from 'react';
+import { NavLink, Navigate, Outlet, Route, Routes, useLocation } from 'react-router-dom';
+import tools from './tools.tsx';
 import './App.css';
-
-const loadJWTDecoder = () => import('./JWTDecoder.tsx');
-const JWTDecoder = lazy(loadJWTDecoder);
-
-const loadJSONFormatter = () => import('./JSONFormatter.tsx');
-const JSONFormatter = lazy(loadJSONFormatter);
 
 type ToolRoute = {
   path: string;
   label: string;
+  description: string;
+  keywords: string[];
   element: ReactNode;
   preload?: () => void;
+  searchText: string;
 };
 
 function RouteFallback({ label }: { label: string }) {
@@ -31,23 +26,23 @@ function withSuspense(element: ReactNode, label: string): ReactNode {
   return <Suspense fallback={<RouteFallback label={label} />}>{element}</Suspense>;
 }
 
-const toolRoutes: ToolRoute[] = [
-  { path: 'generator', label: '二维码生成', element: <QRGenerator /> },
-  { path: 'scanner', label: '二维码识别', element: <QRScanner /> },
-  { path: 'url-parser', label: 'URL 解析', element: <UrlParse /> },
-  {
-    path: 'json-formatter',
-    label: 'JSON 格式化',
-    element: withSuspense(<JSONFormatter />, 'JSON 格式化工具'),
-    preload: loadJSONFormatter,
-  },
-  {
-    path: 'jwt-decoder',
-    label: 'JWT 解析',
-    element: withSuspense(<JWTDecoder />, 'JWT 解析器'),
-    preload: loadJWTDecoder,
-  },
-];
+const toolRoutes: ToolRoute[] = tools.map((tool) => {
+  const { Component, description, fallbackLabel, keywords, label, path, preload } = tool;
+  const element = withSuspense(<Component />, fallbackLabel);
+  const searchText = [label, fallbackLabel, description, keywords.join(' '), path]
+    .join(' ')
+    .toLowerCase();
+
+  return {
+    path,
+    label,
+    description,
+    keywords,
+    element,
+    preload,
+    searchText,
+  } satisfies ToolRoute;
+});
 
 const externalTools = [
   { name: 'CyberChef', href: 'https://gchq.github.io/CyberChef/' },
@@ -59,6 +54,24 @@ const externalTools = [
 const defaultPath = toolRoutes[0]!.path;
 
 function Layout() {
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const searchInputRef = useRef<HTMLInputElement | null>(null);
+  const isMobile = useIsMobile();
+  const location = useLocation();
+  const isPrintMode = useMemo(() => {
+    const params = new URLSearchParams(location.search);
+    if (!params.has('print')) {
+      return false;
+    }
+    const value = params.get('print');
+    if (value === null || value.length === 0) {
+      return true;
+    }
+    const normalized = value.trim().toLowerCase();
+    return normalized !== '0' && normalized !== 'false' && normalized !== 'no';
+  }, [location.search]);
+
   useEffect(() => {
     const timer = window.setTimeout(() => {
       toolRoutes.forEach((route) => route.preload?.());
@@ -69,23 +82,114 @@ function Layout() {
     };
   }, []);
 
+  useEffect(() => {
+    if (!isMobile) {
+      setMenuOpen(false);
+    }
+  }, [isMobile]);
+
+  useEffect(() => {
+    setMenuOpen(false);
+  }, [location]);
+
+  useEffect(() => {
+    if (isMobile && menuOpen) {
+      searchInputRef.current?.focus();
+    }
+  }, [isMobile, menuOpen]);
+
+  const filteredRoutes = useMemo(() => {
+    const term = searchTerm.trim().toLowerCase();
+    if (!term) {
+      return toolRoutes;
+    }
+    return toolRoutes.filter((route) => route.searchText.includes(term));
+  }, [searchTerm]);
+
+  const handleSearchChange = useCallback((event: ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(event.target.value);
+  }, []);
+
+  const handleOpenMenu = useCallback(() => {
+    setMenuOpen(true);
+  }, []);
+
+  const handleCloseMenu = useCallback(() => {
+    setMenuOpen(false);
+  }, []);
+
+  if (isPrintMode) {
+    return (
+      <div className="print-layout">
+        <section className="print-content">
+          <Outlet />
+        </section>
+      </div>
+    );
+  }
+
   return (
     <div className="layout">
-      <aside className="sidebar">
-        <div className="brand">工具集</div>
-        <nav className="nav">
-          {toolRoutes.map(({ path, label, preload }) => (
-            <NavLink
-              key={path}
-              to={path}
-              className={({ isActive }) => (isActive ? 'active' : '')}
-              end
-              onMouseEnter={() => preload?.()}
-              onFocus={() => preload?.()}
+      <div className="layout-header">
+        <button
+          type="button"
+          className="menu-toggle"
+          onClick={handleOpenMenu}
+          aria-label="打开工具菜单"
+          aria-controls="tool-sidebar"
+          aria-expanded={menuOpen}
+        >
+          菜单
+        </button>
+      </div>
+      {isMobile && menuOpen && <div className="sidebar-backdrop" onClick={handleCloseMenu} />}
+      <aside
+        id="tool-sidebar"
+        className={`sidebar ${isMobile ? (menuOpen ? 'sidebar--open' : 'sidebar--closed') : ''}`}
+        aria-hidden={isMobile && !menuOpen}
+        tabIndex={isMobile && !menuOpen ? -1 : undefined}
+      >
+        <div className="sidebar-header">
+          <div className="brand">工具集</div>
+          {isMobile && (
+            <button
+              type="button"
+              className="sidebar-close"
+              onClick={handleCloseMenu}
+              aria-label="关闭菜单"
             >
-              {label}
-            </NavLink>
-          ))}
+              ×
+            </button>
+          )}
+        </div>
+        <div className="menu-search">
+          <input
+            ref={searchInputRef}
+            type="search"
+            className="menu-search-input"
+            placeholder="搜索工具（名称、拼音或英文）"
+            value={searchTerm}
+            onChange={handleSearchChange}
+            aria-label="搜索工具"
+          />
+        </div>
+        <nav className="nav">
+          {filteredRoutes.length === 0 ? (
+            <div className="menu-empty">没有找到匹配的工具</div>
+          ) : (
+            filteredRoutes.map(({ path, label, preload }) => (
+              <NavLink
+                key={path}
+                to={path}
+                className={({ isActive }) => (isActive ? 'active' : '')}
+                end
+                onMouseEnter={() => preload?.()}
+                onFocus={() => preload?.()}
+              >
+                {label}
+              </NavLink>
+            ))
+          )}
         </nav>
         <div className="tool-section">
           <h2>其他工具集</h2>
@@ -105,6 +209,45 @@ function Layout() {
       </section>
     </div>
   );
+}
+
+function useIsMobile(maxWidth = 900) {
+  const [isMobile, setIsMobile] = useState(() => {
+    if (typeof window === 'undefined') {
+      return false;
+    }
+    return window.matchMedia(`(max-width: ${maxWidth}px)`).matches;
+  });
+
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    const mediaQuery = window.matchMedia(`(max-width: ${maxWidth}px)`);
+
+    const listener = (event: MediaQueryListEvent) => {
+      setIsMobile(event.matches);
+    };
+
+    if (typeof mediaQuery.addEventListener === 'function') {
+      mediaQuery.addEventListener('change', listener);
+    } else {
+      mediaQuery.addListener(listener);
+    }
+
+    setIsMobile(mediaQuery.matches);
+
+    return () => {
+      if (typeof mediaQuery.removeEventListener === 'function') {
+        mediaQuery.removeEventListener('change', listener);
+      } else {
+        mediaQuery.removeListener(listener);
+      }
+    };
+  }, [maxWidth]);
+
+  return isMobile;
 }
 
 export default function App() {

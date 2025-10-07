@@ -23,6 +23,9 @@ const UrlParse = lazy(loadUrlParse);
 const loadJSONFormatter = () => import('./JSONFormatter.tsx');
 const JSONFormatter = lazy(loadJSONFormatter);
 
+const loadMarkdownRenderer = () => import('./MarkdownRenderer.tsx');
+const MarkdownRenderer = lazy(loadMarkdownRenderer);
+
 const loadJWTDecoder = () => import('./JWTDecoder.tsx');
 const JWTDecoder = lazy(loadJWTDecoder);
 
@@ -83,6 +86,15 @@ export const tools: ToolDefinition[] = [
     fallbackLabel: 'JSON 格式化工具',
     Component: JSONFormatter,
     preload: loadJSONFormatter,
+  },
+  {
+    path: 'markdown-renderer',
+    label: 'Markdown 渲染',
+    description: '输入 Markdown 并查看实时预览，支持 GitHub 扩展与打印输出',
+    keywords: ['markdown', 'md', 'preview', 'yulan', '打印', 'gfm'],
+    fallbackLabel: 'Markdown 渲染工具',
+    Component: MarkdownRenderer,
+    preload: loadMarkdownRenderer,
   },
   {
     path: 'jwt-decoder',

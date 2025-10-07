@@ -15,3 +15,15 @@ ReactDOM.createRoot(rootElement).render(
     </BrowserRouter>
   </React.StrictMode>
 );
+
+if ('serviceWorker' in navigator) {
+  const register = async () => {
+    try {
+      await navigator.serviceWorker.register('/service-worker.js');
+    } catch (error) {
+      console.error('Service worker registration failed', error);
+    }
+  };
+
+  void register();
+}

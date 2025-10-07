@@ -1,47 +1,40 @@
 # Repository Guidelines
 
-## Project Structure & Module Organization
-- `web/`: Vite + React (TypeScript) front end; `App.tsx` controls layout, `QRGenerator.tsx` 与 `QRScanner.tsx` 实现功能视图。
-- `web/public/`: 静态资源（如 `favicon.svg`），构建时原样复制。
-- `dist/`: 由 `pnpm build:web` 生成的 bundle，Wrangler 直接托管。
-- `src/worker.js`: Cloudflare Worker 入口，负责边缘逻辑与短链转发。
-- `redirect-tools/`: 自定义短链配置。
-- `wrangler.toml`: 部署目标、资产目录与自定义域配置。
-- `package.json` / `pnpm-lock.yaml`: 依赖与脚本；`tsconfig.json` / `web/tsconfig.json` 定义 TypeScript 选项。
-- `web/src/types/`: 本地声明文件（例如 `jsqr` 类型定义）。
+## 项目结构与模块划分
+- `web/` 保存 Vite + React (TypeScript) 前端；`App.tsx` 负责布局与路由，`QRGenerator.tsx`、`QRScanner.tsx` 分别实现二维码生成与识别工具。
+- 静态资源位于 `web/public/`，运行 `pnpm build:web` 后产物输出到 `dist/` 并由 Worker 提供；勿将 `dist/` 提交仓库。
+- 边缘逻辑集中在 `src/worker.js`，短链配置位于 `redirect-tools/`；`web/src/types/` 存放本地声明文件（如 `jsqr.d.ts`）。
+- 关键配置文件：`wrangler.toml`（环境、域名与资产绑定）、`package.json`/`pnpm-lock.yaml`（依赖）、`tsconfig.json` 与 `web/tsconfig.json`（编译选项）。
+- 遵循既定 UI/UX 原则：桌面端保持居中留白，移动端再收窄边距，表单使用 `.section` 等统一布局类。
 
-## Build, Test, and Development Commands
-- `pnpm install`: 同步依赖（修改 `package.json` 后执行）。
-- `pnpm dev` 或 `pnpm dev:web`: 本地启动 Vite (`http://localhost:5173`) 预览前端。
-- `pnpm dev:worker`: 使用 Wrangler 玩家的 `dist/` 产物做本地 Worker 调试。
-- `pnpm build` / `pnpm build:web`: 生产构建，刷新 `dist/` 内容。
-- `pnpm run deploy`: 先构建再部署到默认环境；`pnpm run deploy:prod` 推送到 `production` 环境。以上脚本使用本地安装的 `wrangler@4`，必要时也可执行 `npx wrangler …`。
-- 部署前务必确认 `dist/` 已由最新代码生成。
+## 构建、测试与开发命令
+- `pnpm install`：修改 `package.json` 后同步依赖。
+- `pnpm dev`/`pnpm dev:web`：启动 Vite 开发服务器，默认地址 `http://localhost:5173`。
+- `pnpm dev:worker`：基于最新 `dist/` 由 Wrangler 本地调试 Worker。
+- `pnpm build`/`pnpm build:web`：生成生产环境资源，部署前务必刷新。
+- `pnpm run deploy` 部署到默认 Cloudflare 环境；`pnpm run deploy:prod` 发布到生产环境，必要时可使用 `npx wrangler …`。
+- 开发调试时务必关闭浏览器 DevTools 的离线模式，并在需要时通过 Application → Storage → Clear site data 清理 Service Worker 缓存，防止本地离线缓存干扰调试。
 
-## Coding Style & Naming Conventions
-- TypeScript/React：使用 ES Modules、Hooks、语义化变量（如 `canvasRef`、`autoGenerate`）。
-- 严格模式已开启；参考 `QRGenerator.tsx`、`QRScanner.tsx` 为 refs、事件处理添加类型注解。
-- 样式集中在 `App.css`，保持两空格缩进与既有配色/阴影风格。
-- 静态资源使用 kebab-case (`favicon.svg`)，组件文件使用 PascalCase。
-- 可运行 Prettier；如未启用，请保持现有格式与空行约定。
+## 代码风格与命名约定
+- 统一使用 ES Modules、React Hooks 与语义化命名（如 `canvasRef`、`autoGenerate`），严格模式已启用，参考 `QRGenerator.tsx`、`QRScanner.tsx` 的类型注解方式。
+- 样式集中在 `web/src/App.css`，保持两空格缩进并复用 `.section`、`.form-grid`、`.form-field` 等布局工具类，扩展样式时优先沿用现有变量。
+- 组件文件采用 PascalCase，静态资源使用 kebab-case。若已配置 Prettier，可直接执行；否则请遵循既有空行与缩进规则。
 
-- 目前未配置自动化测试；提交重要改动时在 PR 中列出手动验证步骤（生成/识别二维码、导航切换等）。
-- 若引入测试脚本或框架（如 Miniflare、Vitest），请同步更新命令说明并记录覆盖范围。
+## 测试指引
+- 项目暂无自动化测试，提交 PR 时需记录手动验证步骤（二维码生成、扫码识别、页面导航等）。
+- 引入 Vitest、Miniflare 等测试框架时，请在 PR 与本文档中补充命令、覆盖范围与执行方式。
 
-## Commit & Pull Request Guidelines
-- Commit 消息保持“动词 + 上下文”，例：`Add hash navigation shell`。
-- PR 描述包含：变更摘要、测试记录、部署影响，以及必要的截图或录屏（尤其是 UI 更新）。
-- 涉及 `wrangler.toml`、`package.json`、`tsconfig` 的更改需在 PR 中明确指出。
+## 提交与 PR 规范
+- Commit 信息保持“动词 + 场景”，如 `Add hash navigation shell`，确保单次提交聚焦单一改动。
+- PR 需包含变更摘要、人工测试结果、部署影响，并在涉及 UI 时附截图或录屏。
+- 若修改 `wrangler.toml`、`package.json`、任一 `tsconfig`，务必在 PR 描述中显式标注。
 
-## Security & Configuration Tips
-- 环境机密通过 Wrangler 环境变量管理，切勿写入仓库。
-- 不要提交 `dist/` 或临时构建文件；本地构建仅用于部署。
-- 部署前核对 `wrangler.toml` 中的自定义域与资产目录是否正确。
+## 安全与配置提示
+- 所有密钥通过 Wrangler 环境变量管理，不得写入仓库。
+- 部署前确认 `wrangler.toml` 的 `[assets]` 绑定为 `ASSETS` 且自定义域名正确。
+- 扩展样式时优先复用既有 CSS 变量与工具类，避免割裂的局部风格。
 
-## Adding New Tool Views
-- 在 `web/src` 下创建新的功能组件（保持 PascalCase 文件名），并导出 React 组件。
-- 在 `web/src/App.tsx` 的 `toolRoutes` 数组中注册新路由：设置 `path`（用于 URL）、`label`（侧边栏显示文案）与 `Component`（刚创建的组件）。
-- 若功能依赖较重，可使用 `React.lazy` + `Suspense` 在 `App.tsx` 中懒加载组件，并通过 `preload` 回调实现用户悬停或空闲时预加载。
-- 如需外链，请在 `externalTools` 列表中补充，保持与现有结构一致。
-- 本地运行 `pnpm dev:web` 验证路由与 UI，生产前执行 `pnpm build:web` 以确保构建成功。
-- 部署前确保 `wrangler.toml` 的 `[assets]` 段落设置 `binding = "ASSETS"`，Worker 通过 `env.ASSETS.fetch` 服务 SPA 入口与静态资源。
+## 添加新工具视图
+- 在 `web/src/` 使用 PascalCase 新建组件并导出 React 组件。
+- 在 `web/src/App.tsx` 的 `toolRoutes` 中登记 `path`、`label`、`Component`；对重量级视图可结合 `React.lazy` 与 `Suspense` 并添加 `preload` 回调。
+- 如需外链更新 `externalTools` 列表，本地通过 `pnpm dev:web` 验证后执行 `pnpm build:web` 确认生产构建。
