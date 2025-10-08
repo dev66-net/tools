@@ -31,6 +31,7 @@ import type { I18nContextValue } from './i18n/index';
 import type { LocaleCode } from './i18n/types';
 import tools, { type ToolDefinition, type ToolId } from './tools';
 import Home from './Home';
+import { setPreferredLocale, useAutoLanguageRedirect } from './auto-lang';
 import './App.css';
 
 const externalTools = [
@@ -276,6 +277,7 @@ function Layout() {
       if (nextLocale === locale) {
         return;
       }
+      setPreferredLocale(nextLocale);
       const nextSlug = slug === 'index' ? 'index' : slug;
       const nextPath = buildFriendlyPathForLocale(nextLocale, nextSlug);
       navigate({ pathname: nextPath, search: location.search });
@@ -390,14 +392,15 @@ function Layout() {
                 </NavLink>
               ))
             )}
-          </nav>
-          <LanguageSwitcher
-            currentLocale={locale}
-            slug={slug}
-            search={location.search}
-            label={languageMenu.label}
-            options={languageMenu.options}
-          />
+        </nav>
+        <LanguageSwitcher
+          currentLocale={locale}
+          slug={slug}
+          search={location.search}
+          label={languageMenu.label}
+          options={languageMenu.options}
+          onSelectLocale={handleLocaleChange}
+        />
           <div className="tool-section">
             <h2>{layout.externalToolsTitle}</h2>
             <ul className="tool-list">
@@ -437,12 +440,14 @@ function LanguageSwitcher({
   search,
   label,
   options,
+  onSelectLocale,
 }: {
   currentLocale: LocaleCode;
   slug: string;
   search: string;
   label: string;
   options: Record<LocaleCode, string>;
+  onSelectLocale: (locale: LocaleCode) => void;
 }) {
   return (
     <nav className="language-switcher" aria-label={label}>
@@ -455,7 +460,14 @@ function LanguageSwitcher({
             const isCurrent = locale === currentLocale;
             return (
               <li key={locale}>
-                <Link to={{ pathname: href, search }} aria-current={isCurrent ? 'true' : undefined}>
+                <Link
+                  to={{ pathname: href, search }}
+                  aria-current={isCurrent ? 'true' : undefined}
+                  onClick={(event) => {
+                    event.preventDefault();
+                    onSelectLocale(locale);
+                  }}
+                >
                   {options[locale] ?? locale}
                 </Link>
               </li>
@@ -507,6 +519,8 @@ function useIsMobile(maxWidth = 900) {
 }
 
 export default function App() {
+  useAutoLanguageRedirect();
+
   const homeElements = useMemo(
     () =>
       homeRoutes.map((route) => (
