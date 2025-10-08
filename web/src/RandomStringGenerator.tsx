@@ -1,4 +1,5 @@
 import { ChangeEvent, useState } from 'react';
+import { useI18n } from './i18n/index';
 import { randomIntExclusive, supportsCryptoRandom } from './utils/random.ts';
 
 const baseSets = {
@@ -12,6 +13,46 @@ const MAX_LENGTH = 512;
 const MAX_COUNT = 100;
 
 type CopyState = 'idle' | 'copied';
+
+type RandomStringGeneratorCopy = {
+  title: string;
+  description: string;
+  form: {
+    lengthLabel: string;
+    countLabel: string;
+    includeLowercase: string;
+    includeUppercase: string;
+    includeDigits: string;
+    includeSymbols: string;
+    customLabel: string;
+    customPlaceholder: string;
+    preferCryptoLabel: string;
+    buttons: {
+      generate: string;
+      copy: string;
+      copied: string;
+    };
+    errors: {
+      invalidLength: string;
+      maxLength: string;
+      invalidCount: string;
+      maxCount: string;
+      emptyPool: string;
+      generic: string;
+    };
+  };
+  results: {
+    cryptoUsed: string;
+    cryptoFallback: string;
+    mathUsed: string;
+  };
+  guidance: {
+    title: string;
+    description: string;
+    bullets: string[];
+    hint: string;
+  };
+};
 
 async function copyToClipboard(text: string): Promise<boolean> {
   if (!text) {
@@ -40,6 +81,8 @@ async function copyToClipboard(text: string): Promise<boolean> {
 }
 
 export default function RandomStringGenerator() {
+  const { translations } = useI18n();
+  const copy = translations.tools.randomStringGenerator.page as RandomStringGeneratorCopy;
   const [length, setLength] = useState('16');
   const [count, setCount] = useState('5');
   const [includeLowercase, setIncludeLowercase] = useState(true);
@@ -80,25 +123,25 @@ export default function RandomStringGenerator() {
     const countValue = Number(count);
 
     if (!Number.isFinite(lengthValue) || lengthValue < 1) {
-      setError('长度必须为正整数。');
+      setError(copy.form.errors.invalidLength);
       return;
     }
     if (lengthValue > MAX_LENGTH) {
-      setError(`最大长度为 ${MAX_LENGTH}。`);
+      setError(copy.form.errors.maxLength.replace('{count}', String(MAX_LENGTH)));
       return;
     }
     if (!Number.isFinite(countValue) || countValue < 1) {
-      setError('数量必须为正整数。');
+      setError(copy.form.errors.invalidCount);
       return;
     }
     if (countValue > MAX_COUNT) {
-      setError(`一次最多生成 ${MAX_COUNT} 条。`);
+      setError(copy.form.errors.maxCount.replace('{count}', String(MAX_COUNT)));
       return;
     }
 
     const pool = buildPool();
     if (!pool) {
-      setError('请至少选择一种字符类型或输入自定义字符。');
+      setError(copy.form.errors.emptyPool);
       return;
     }
 
@@ -117,7 +160,7 @@ export default function RandomStringGenerator() {
       setResults(output);
       setUsedCrypto(cryptoUsed);
     } catch (generateError) {
-      setError((generateError as Error).message || '生成随机字符串失败。');
+      setError((generateError as Error).message || copy.form.errors.generic);
       setResults([]);
       setUsedCrypto(false);
     }
@@ -136,14 +179,12 @@ export default function RandomStringGenerator() {
 
   return (
     <main className="card">
-      <h1>随机字符串生成器：自定义字符集批量生成</h1>
-      <p className="card-description">
-        组合多种字符集或自定义符号，一键批量生成随机字符串，并可启用加密安全随机源用于密码、Token 或测试数据。
-      </p>
+      <h1>{copy.title}</h1>
+      <p className="card-description">{copy.description}</p>
       <section className="section">
         <div className="form-grid">
           <div className="form-field">
-            <label htmlFor="rsg-length">长度</label>
+            <label htmlFor="rsg-length">{copy.form.lengthLabel}</label>
             <input
               id="rsg-length"
               type="number"
@@ -154,7 +195,7 @@ export default function RandomStringGenerator() {
             />
           </div>
           <div className="form-field">
-            <label htmlFor="rsg-count">数量</label>
+            <label htmlFor="rsg-count">{copy.form.countLabel}</label>
             <input
               id="rsg-count"
               type="number"
@@ -172,7 +213,7 @@ export default function RandomStringGenerator() {
               checked={includeLowercase}
               onChange={(event: ChangeEvent<HTMLInputElement>) => setIncludeLowercase(event.target.checked)}
             />
-            小写字母
+            {copy.form.includeLowercase}
           </label>
           <label>
             <input
@@ -180,7 +221,7 @@ export default function RandomStringGenerator() {
               checked={includeUppercase}
               onChange={(event: ChangeEvent<HTMLInputElement>) => setIncludeUppercase(event.target.checked)}
             />
-            大写字母
+            {copy.form.includeUppercase}
           </label>
           <label>
             <input
@@ -188,7 +229,7 @@ export default function RandomStringGenerator() {
               checked={includeDigits}
               onChange={(event: ChangeEvent<HTMLInputElement>) => setIncludeDigits(event.target.checked)}
             />
-            数字
+            {copy.form.includeDigits}
           </label>
           <label>
             <input
@@ -196,16 +237,16 @@ export default function RandomStringGenerator() {
               checked={includeSymbols}
               onChange={(event: ChangeEvent<HTMLInputElement>) => setIncludeSymbols(event.target.checked)}
             />
-            特殊符号
+            {copy.form.includeSymbols}
           </label>
         </div>
-        <label htmlFor="rsg-custom">自定义字符</label>
+        <label htmlFor="rsg-custom">{copy.form.customLabel}</label>
         <input
           id="rsg-custom"
           type="text"
           value={customChars}
           onChange={(event: ChangeEvent<HTMLInputElement>) => setCustomChars(event.target.value)}
-          placeholder="可选，例如中文字符或额外的符号"
+          placeholder={copy.form.customPlaceholder}
         />
         <label className="checkbox-row">
           <input
@@ -213,15 +254,15 @@ export default function RandomStringGenerator() {
             checked={preferCrypto}
             onChange={(event: ChangeEvent<HTMLInputElement>) => setPreferCrypto(event.target.checked)}
           />
-          优先使用加密安全的随机源
+          {copy.form.preferCryptoLabel}
         </label>
         {error ? <p className="error">{error}</p> : null}
         <div className="actions">
           <button type="button" className="secondary" onClick={handleGenerate}>
-            生成字符串
+            {copy.form.buttons.generate}
           </button>
           <button type="button" className="secondary" onClick={handleCopy} disabled={results.length === 0}>
-            {copyState === 'copied' ? '已复制' : '复制全部'}
+            {copyState === 'copied' ? copy.form.buttons.copied : copy.form.buttons.copy}
           </button>
         </div>
         {results.length > 0 ? (
@@ -229,9 +270,9 @@ export default function RandomStringGenerator() {
             <p className="hint">
               {preferCrypto
                 ? usedCrypto
-                  ? '已使用加密安全随机源生成。'
-                  : '未检测到加密安全随机源，已回退至 Math.random()。'
-                : '已使用 Math.random() 生成。'}
+                  ? copy.results.cryptoUsed
+                  : copy.results.cryptoFallback
+                : copy.results.mathUsed}
             </p>
             <ol className="string-results">
               {results.map((value, index) => (
@@ -245,15 +286,15 @@ export default function RandomStringGenerator() {
       </section>
       <section className="section">
         <header className="section-header">
-          <h2>构建安全可靠的随机字符串</h2>
-          <p>根据目标场景调整字符集与长度，既保证复杂度又方便记忆或复制。</p>
+          <h2>{copy.guidance.title}</h2>
+          <p>{copy.guidance.description}</p>
         </header>
         <ul>
-          <li>生成密码时建议同时勾选大小写、数字与符号，并开启加密安全随机源。</li>
-          <li>用于测试数据时，可通过自定义字符添加中文或特定前缀，模拟真实输入。</li>
-          <li>批量生成的结果支持一键复制，粘贴到脚本或 CSV 即可完成数据准备。</li>
+          {copy.guidance.bullets.map((bullet) => (
+            <li key={bullet}>{bullet}</li>
+          ))}
         </ul>
-        <p className="hint">浏览器内生成无需联网，适合企业内网或离线环境快速制作凭证与测试样本。</p>
+        <p className="hint">{copy.guidance.hint}</p>
       </section>
     </main>
   );

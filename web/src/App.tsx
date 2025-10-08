@@ -23,6 +23,7 @@ import {
   I18nContext,
   SUPPORTED_LOCALES,
   TRANSLATIONS,
+  buildFriendlyPathForLocale,
   buildPathForLocale,
   getLocaleFromPath,
 } from './i18n/index';
@@ -147,10 +148,11 @@ function buildToolRoutes(): {
 
 function buildHomeRoutes(): HomeRoute[] {
   return SUPPORTED_LOCALES.map((locale) => {
-    const href = buildPathForLocale(locale, 'index');
+    const fileHref = buildPathForLocale(locale, 'index');
+    const href = buildFriendlyPathForLocale(locale, 'index');
     return {
       locale,
-      path: href.replace(/^\//u, ''),
+      path: fileHref.replace(/^\//u, ''),
       href,
     } satisfies HomeRoute;
   });
@@ -274,7 +276,8 @@ function Layout() {
       if (nextLocale === locale) {
         return;
       }
-      const nextPath = buildPathForLocale(nextLocale, slug === 'index' ? 'index' : slug);
+      const nextSlug = slug === 'index' ? 'index' : slug;
+      const nextPath = buildFriendlyPathForLocale(nextLocale, nextSlug);
       navigate({ pathname: nextPath, search: location.search });
     },
     [locale, slug, navigate, location.search]
@@ -447,7 +450,8 @@ function LanguageSwitcher({
         <summary>{label}</summary>
         <ul>
           {SUPPORTED_LOCALES.map((locale) => {
-            const href = buildPathForLocale(locale, slug === 'index' ? 'index' : slug);
+            const normalizedSlug = slug === 'index' ? 'index' : slug;
+            const href = buildFriendlyPathForLocale(locale, normalizedSlug);
             const isCurrent = locale === currentLocale;
             return (
               <li key={locale}>
@@ -522,12 +526,14 @@ export default function App() {
   return (
     <Routes>
       <Route path="/" element={<Layout />}>
-        <Route index element={<Navigate to="/index.html" replace />} />
+        <Route index element={<Home />} />
+        <Route path="zh-cn" element={<Outlet />}>
+          <Route index element={<Home />} />
+        </Route>
         {homeElements}
         {toolElements}
       </Route>
-      <Route path="zh-cn" element={<Navigate to="/zh-cn/index.html" replace />} />
-      <Route path="*" element={<Navigate to="/index.html" replace />} />
+      <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
 }

@@ -1,4 +1,5 @@
 import { ChangeEvent, useMemo, useState } from 'react';
+import { useI18n } from './i18n/index';
 import { bytesToHex, bytesToSpacedHex, bytesToUtf8, hexToBytes, utf8ToBytes } from './utils/bytes.ts';
 
 type HexGrouping = 'none' | 'byte' | 'word';
@@ -15,11 +16,57 @@ type HexDecodeResult = {
   hex: string;
 };
 
-const groupingOptions: { value: HexGrouping; label: string }[] = [
-  { value: 'none', label: '无分隔（紧凑）' },
-  { value: 'byte', label: '按字节添加空格' },
-  { value: 'word', label: '每两个字节添加空格' },
-];
+type HexDecodeMessages = {
+  invalidCharacters: string;
+  decodeFailed: string;
+};
+
+type HexConverterCopy = {
+  title: string;
+  description: string;
+  encode: {
+    title: string;
+    description: string;
+    inputLabel: string;
+    placeholder: string;
+    uppercaseLabel: string;
+    groupingLabel: string;
+    groupingOptions: Record<HexGrouping, string>;
+    byteCountLabel: string;
+    resultLabel: string;
+    resultPlaceholder: string;
+    buttons: {
+      copy: string;
+      copied: string;
+      clear: string;
+    };
+  };
+  decode: {
+    title: string;
+    description: string;
+    inputLabel: string;
+    placeholder: string;
+    errors: HexDecodeMessages;
+    byteCountLabel: string;
+    byteCountEmpty: string;
+    resultLabel: string;
+    resultPlaceholder: string;
+    normalizedLabel: string;
+    buttons: {
+      copy: string;
+      copied: string;
+      clear: string;
+    };
+  };
+  section: {
+    title: string;
+    description: string;
+    bullets: string[];
+    hint: string;
+  };
+};
+
+const groupingValues: HexGrouping[] = ['none', 'byte', 'word'];
 
 const EMPTY_DECODE: HexDecodeResult = {
   text: '',
@@ -64,7 +111,7 @@ function sanitizeHexInput(value: string): string {
     .toLowerCase();
 }
 
-function decodeHex(input: string): HexDecodeResult {
+function decodeHex(input: string, messages: HexDecodeMessages): HexDecodeResult {
   if (!input.trim()) {
     return EMPTY_DECODE;
   }
@@ -72,7 +119,7 @@ function decodeHex(input: string): HexDecodeResult {
   if (!sanitized) {
     return {
       ...EMPTY_DECODE,
-      error: '未检测到有效的十六进制字符。',
+      error: messages.invalidCharacters,
     };
   }
   try {
@@ -87,7 +134,7 @@ function decodeHex(input: string): HexDecodeResult {
     console.error('Hex decode failed', error);
     return {
       ...EMPTY_DECODE,
-      error: (error as Error).message || '无法解析该十六进制字符串。',
+      error: (error as Error).message || messages.decodeFailed,
     };
   }
 }
@@ -119,6 +166,8 @@ async function copyToClipboard(text: string): Promise<boolean> {
 }
 
 export default function HexConverter() {
+  const { translations } = useI18n();
+  const copy = translations.tools.hexConverter.page as HexConverterCopy;
   const [encodeInput, setEncodeInput] = useState('');
   const [uppercase, setUppercase] = useState(true);
   const [grouping, setGrouping] = useState<HexGrouping>('byte');
@@ -126,8 +175,19 @@ export default function HexConverter() {
   const [encodeCopied, setEncodeCopied] = useState(false);
   const [decodeCopied, setDecodeCopied] = useState(false);
 
-  const encodeResult = useMemo(() => encodeHex(encodeInput, uppercase, grouping), [encodeInput, uppercase, grouping]);
-  const decodeResult = useMemo(() => decodeHex(decodeInput), [decodeInput]);
+  const groupingOptions = useMemo(
+    () => groupingValues.map((value) => ({ value, label: copy.encode.groupingOptions[value] })),
+    [copy.encode.groupingOptions]
+  );
+
+  const encodeResult = useMemo(
+    () => encodeHex(encodeInput, uppercase, grouping),
+    [encodeInput, uppercase, grouping]
+  );
+  const decodeResult = useMemo(
+    () => decodeHex(decodeInput, copy.decode.errors),
+    [decodeInput, copy.decode.errors]
+  );
 
   const handleEncodeChange = (event: ChangeEvent<HTMLTextAreaElement>) => {
     setEncodeInput(event.target.value);
@@ -167,28 +227,26 @@ export default function HexConverter() {
 
   return (
     <main className="card">
-      <h1>Hex 转换器：文本与十六进制互转</h1>
-      <p className="card-description">
-        Hex 转换器支持文本与十六进制双向转换，提供大小写、分组和字节统计选项，帮助分析二进制内容与网络报文。
-      </p>
+      <h1>{copy.title}</h1>
+      <p className="card-description">{copy.description}</p>
       <section className="section">
         <header className="section-header">
-          <h2>文本转 Hex</h2>
-          <p>输入的内容将按 UTF-8 编码为字节，再输出对应的十六进制。</p>
+          <h2>{copy.encode.title}</h2>
+          <p>{copy.encode.description}</p>
         </header>
-        <label htmlFor="hex-encode-input">原始文本</label>
+        <label htmlFor="hex-encode-input">{copy.encode.inputLabel}</label>
         <textarea
           id="hex-encode-input"
           value={encodeInput}
           onChange={handleEncodeChange}
           rows={5}
-          placeholder="需要转换的文本"
+          placeholder={copy.encode.placeholder}
         />
         <div className="form-inline">
           <label>
-            <input type="checkbox" checked={uppercase} onChange={handleUppercaseToggle} /> 使用大写
+            <input type="checkbox" checked={uppercase} onChange={handleUppercaseToggle} /> {copy.encode.uppercaseLabel}
           </label>
-          <label htmlFor="hex-grouping">分组方式</label>
+          <label htmlFor="hex-grouping">{copy.encode.groupingLabel}</label>
           <select id="hex-grouping" value={grouping} onChange={handleGroupingChange}>
             {groupingOptions.map((option) => (
               <option key={option.value} value={option.value}>
@@ -196,63 +254,82 @@ export default function HexConverter() {
               </option>
             ))}
           </select>
-          <span className="hint">字节数：{encodeResult.byteLength}</span>
+          <span className="hint">
+            {copy.encode.byteCountLabel.replace('{count}', String(encodeResult.byteLength))}
+          </span>
         </div>
-        <label htmlFor="hex-encode-output">Hex 输出</label>
-        <textarea id="hex-encode-output" value={encodeResult.output} readOnly rows={6} placeholder="十六进制结果" />
+        <label htmlFor="hex-encode-output">{copy.encode.resultLabel}</label>
+        <textarea
+          id="hex-encode-output"
+          value={encodeResult.output}
+          readOnly
+          rows={6}
+          placeholder={copy.encode.resultPlaceholder}
+        />
         <div className="actions">
           <button type="button" className="secondary" onClick={handleCopyEncode} disabled={!encodeResult.output}>
-            {encodeCopied ? '已复制' : '复制 Hex'}
+            {encodeCopied ? copy.encode.buttons.copied : copy.encode.buttons.copy}
           </button>
           <button type="button" className="secondary" onClick={() => setEncodeInput('')}>
-            清空输入
+            {copy.encode.buttons.clear}
           </button>
         </div>
       </section>
       <section className="section">
         <header className="section-header">
-          <h2>Hex 转文本</h2>
-          <p>接受含空格、换行、0x 前缀的 Hex 字符串，自动清理后再解码。</p>
+          <h2>{copy.decode.title}</h2>
+          <p>{copy.decode.description}</p>
         </header>
-        <label htmlFor="hex-decode-input">Hex 字符串</label>
+        <label htmlFor="hex-decode-input">{copy.decode.inputLabel}</label>
         <textarea
           id="hex-decode-input"
           value={decodeInput}
           onChange={handleDecodeChange}
           rows={6}
-          placeholder="如：48656c6c6f 或 48 65 6c 6c 6f"
+          placeholder={copy.decode.placeholder}
         />
         {decodeResult.error ? (
           <p className="error">{decodeResult.error}</p>
         ) : (
-          <p className="hint">字节数：{decodeResult.bytes || '—'}</p>
+          <p className="hint">
+            {copy.decode.byteCountLabel.replace(
+              '{count}',
+              decodeResult.bytes ? String(decodeResult.bytes) : copy.decode.byteCountEmpty
+            )}
+          </p>
         )}
-        <label htmlFor="hex-decoded-text">解码文本</label>
-        <textarea id="hex-decoded-text" value={decodeResult.text} readOnly rows={5} placeholder="解码后的文本" />
+        <label htmlFor="hex-decoded-text">{copy.decode.resultLabel}</label>
+        <textarea
+          id="hex-decoded-text"
+          value={decodeResult.text}
+          readOnly
+          rows={5}
+          placeholder={copy.decode.resultPlaceholder}
+        />
         <div className="decoded-hex">
-          <span className="hint">标准化 Hex：</span>
+          <span className="hint">{copy.decode.normalizedLabel}</span>
           <pre>{decodeResult.hex || '—'}</pre>
         </div>
         <div className="actions">
           <button type="button" className="secondary" onClick={handleCopyDecode} disabled={!decodeResult.text}>
-            {decodeCopied ? '已复制' : '复制文本'}
+            {decodeCopied ? copy.decode.buttons.copied : copy.decode.buttons.copy}
           </button>
           <button type="button" className="secondary" onClick={() => setDecodeInput('')}>
-            清空输入
+            {copy.decode.buttons.clear}
           </button>
         </div>
       </section>
       <section className="section">
         <header className="section-header">
-          <h2>十六进制排查技巧</h2>
-          <p>利用标准化输出和字节统计，可快速识别编码方式或数据截断问题。</p>
+          <h2>{copy.section.title}</h2>
+          <p>{copy.section.description}</p>
         </header>
         <ul>
-          <li>转换结果中的“字节数”有助于确认文件大小，适合对比接口上传的二进制长度。</li>
-          <li>使用自定义分组可生成常见的 0xAB、ABCD 等格式，方便粘贴到代码或协议说明。</li>
-          <li>若解码失败，请确认输入是否含有非十六进制字符或奇数长度，必要时先清理分隔符。</li>
+          {copy.section.bullets.map((bullet) => (
+            <li key={bullet}>{bullet}</li>
+          ))}
         </ul>
-        <p className="hint">本工具完全离线运行，适合在内网环境处理日志或敏感报文。</p>
+        <p className="hint">{copy.section.hint}</p>
       </section>
     </main>
   );

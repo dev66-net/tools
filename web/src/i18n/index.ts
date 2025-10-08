@@ -23,6 +23,18 @@ export const TRANSLATIONS: Record<LocaleCode, Translations> = {
   'zh-CN': zhCN,
 };
 
+export function buildIndexHref(locale: LocaleCode): string {
+  const segment = LOCALE_PATH_SEGMENTS[locale];
+  return segment ? `/${segment}/` : '/';
+}
+
+export function buildFriendlyPathForLocale(locale: LocaleCode, slug: string): string {
+  if (slug === 'index') {
+    return buildIndexHref(locale);
+  }
+  return buildPathForLocale(locale, slug);
+}
+
 export type I18nContextValue = {
   locale: LocaleCode;
   setLocale: (nextLocale: LocaleCode) => void;

@@ -1,19 +1,66 @@
 import { ChangeEvent, useMemo, useState } from 'react';
+import { useI18n } from './i18n/index';
 import { UUID_NAMESPACES, generateUuidV1, generateUuidV4, generateUuidV5 } from './utils/uuid.ts';
 
-const namespaceOptions = [
-  { value: 'DNS', label: 'DNS（域名）', description: '6ba7b810-9dad-11d1-80b4-00c04fd430c8' },
-  { value: 'URL', label: 'URL', description: '6ba7b811-9dad-11d1-80b4-00c04fd430c8' },
-  { value: 'OID', label: 'OID', description: '6ba7b812-9dad-11d1-80b4-00c04fd430c8' },
-  { value: 'X500', label: 'X.500 名称', description: '6ba7b814-9dad-11d1-80b4-00c04fd430c8' },
-  { value: 'custom', label: '自定义命名空间', description: '输入其他有效 UUID' },
-] as const;
+const namespaceOptions = ['DNS', 'URL', 'OID', 'X500', 'custom'] as const;
 
-type NamespaceOption = (typeof namespaceOptions)[number]['value'];
+type NamespaceOption = (typeof namespaceOptions)[number];
 
 type CopyTarget = 'v1' | 'v4' | 'v5';
 
 type V5State = 'idle' | 'pending' | 'error' | 'success';
+
+type UUIDGeneratorCopy = {
+  title: string;
+  description: string;
+  sections: {
+    v4: {
+      title: string;
+      hint: string;
+      placeholder: string;
+      generate: string;
+      copy: string;
+      copied: string;
+    };
+    v1: {
+      title: string;
+      hint: string;
+      placeholder: string;
+      generate: string;
+      copy: string;
+      copied: string;
+    };
+    v5: {
+      title: string;
+      hint: string;
+      namespaceLabel: string;
+      namespaceOptions: Record<Exclude<NamespaceOption, 'custom'>, { label: string; description: string }> & {
+        custom: { label: string; description: string };
+      };
+      customNamespaceLabel: string;
+      customNamespacePlaceholder: string;
+      nameLabel: string;
+      namePlaceholder: string;
+      buttons: {
+        generate: string;
+        pending: string;
+        copy: string;
+        copied: string;
+      };
+      errors: {
+        nameRequired: string;
+        generic: string;
+      };
+      resultPlaceholder: string;
+    };
+  };
+  guidance: {
+    title: string;
+    description: string;
+    bullets: string[];
+    hint: string;
+  };
+};
 
 async function copyToClipboard(text: string): Promise<boolean> {
   if (!text) {
@@ -42,6 +89,8 @@ async function copyToClipboard(text: string): Promise<boolean> {
 }
 
 export default function UUIDGenerator() {
+  const { translations } = useI18n();
+  const copy = translations.tools.uuidGenerator.page as UUIDGeneratorCopy;
   const [v1Uuid, setV1Uuid] = useState('');
   const [v4Uuid, setV4Uuid] = useState('');
   const [v5Uuid, setV5Uuid] = useState('');
@@ -59,10 +108,10 @@ export default function UUIDGenerator() {
     return UUID_NAMESPACES[namespace];
   }, [namespace, customNamespace]);
 
-  const selectedNamespaceLabel = useMemo(() => {
-    const option = namespaceOptions.find((item) => item.value === namespace);
-    return option?.description ?? '';
-  }, [namespace]);
+  const selectedNamespaceLabel = useMemo(
+    () => copy.sections.v5.namespaceOptions[namespace].description,
+    [copy.sections.v5.namespaceOptions, namespace]
+  );
 
   const handleCopy = async (value: string, target: CopyTarget) => {
     const success = await copyToClipboard(value);
@@ -89,7 +138,7 @@ export default function UUIDGenerator() {
     const trimmedName = name.trim();
     if (!trimmedName) {
       setV5Status('error');
-      setV5Error('请填写名称，UUID v5 需要名称作为输入。');
+      setV5Error(copy.sections.v5.errors.nameRequired);
       return;
     }
     try {
@@ -98,7 +147,7 @@ export default function UUIDGenerator() {
       setV5Status('success');
     } catch (error) {
       setV5Status('error');
-      setV5Error((error as Error).message || 'v5 生成失败，请检查命名空间与名称。');
+      setV5Error((error as Error).message || copy.sections.v5.errors.generic);
     }
   };
 
@@ -107,50 +156,48 @@ export default function UUIDGenerator() {
 
   return (
     <main className="card">
-      <h1>UUID 生成器：在线创建 v1/v4/v5</h1>
-      <p className="card-description">
-        即时生成时间序列 v1、随机 v4 以及基于命名空间的 v5 UUID，支持批量复制与自定义命名空间，适合标识资源或请求链路。
-      </p>
+      <h1>{copy.title}</h1>
+      <p className="card-description">{copy.description}</p>
       <section className="section">
         <header className="section-header">
-          <h2>UUID v4 · 随机</h2>
-          <p className="hint">使用加密随机数构造，适用于大多数场景。</p>
+          <h2>{copy.sections.v4.title}</h2>
+          <p className="hint">{copy.sections.v4.hint}</p>
         </header>
         <div className="uuid-output">
-          <code>{v4Uuid || '点击生成后显示结果'}</code>
+          <code>{v4Uuid || copy.sections.v4.placeholder}</code>
           <div className="uuid-actions">
             <button type="button" className="secondary" onClick={handleGenerateV4}>
-              生成 v4
+              {copy.sections.v4.generate}
             </button>
             <button type="button" className="secondary" onClick={() => handleCopy(v4Uuid, 'v4')} disabled={!v4Uuid}>
-              {copied === 'v4' ? '已复制' : '复制'}
+              {copied === 'v4' ? copy.sections.v4.copied : copy.sections.v4.copy}
             </button>
           </div>
         </div>
       </section>
       <section className="section">
         <header className="section-header">
-          <h2>UUID v1 · 时间序列</h2>
-          <p className="hint">基于时间戳与节点标识生成，保持有序。</p>
+          <h2>{copy.sections.v1.title}</h2>
+          <p className="hint">{copy.sections.v1.hint}</p>
         </header>
         <div className="uuid-output">
-          <code>{v1Uuid || '点击生成后显示结果'}</code>
+          <code>{v1Uuid || copy.sections.v1.placeholder}</code>
           <div className="uuid-actions">
             <button type="button" className="secondary" onClick={handleGenerateV1}>
-              生成 v1
+              {copy.sections.v1.generate}
             </button>
             <button type="button" className="secondary" onClick={() => handleCopy(v1Uuid, 'v1')} disabled={!v1Uuid}>
-              {copied === 'v1' ? '已复制' : '复制'}
+              {copied === 'v1' ? copy.sections.v1.copied : copy.sections.v1.copy}
             </button>
           </div>
         </div>
       </section>
       <section className="section">
         <header className="section-header">
-          <h2>UUID v5 · 名称散列</h2>
-          <p className="hint">根据命名空间与名称生成稳定的 UUID。</p>
+          <h2>{copy.sections.v5.title}</h2>
+          <p className="hint">{copy.sections.v5.hint}</p>
         </header>
-        <label htmlFor="uuid-namespace">命名空间</label>
+        <label htmlFor="uuid-namespace">{copy.sections.v5.namespaceLabel}</label>
         <select
           id="uuid-namespace"
           value={namespace}
@@ -160,16 +207,16 @@ export default function UUIDGenerator() {
             setV5Error('');
           }}
         >
-          {namespaceOptions.map((option) => (
-            <option key={option.value} value={option.value}>
-              {option.label}
+          {namespaceOptions.map((value) => (
+            <option key={value} value={value}>
+              {copy.sections.v5.namespaceOptions[value].label}
             </option>
           ))}
         </select>
         <p className="hint">{selectedNamespaceLabel}</p>
         {isCustomNamespace ? (
           <>
-            <label htmlFor="uuid-custom-namespace">自定义命名空间 UUID</label>
+            <label htmlFor="uuid-custom-namespace">{copy.sections.v5.customNamespaceLabel}</label>
             <input
               id="uuid-custom-namespace"
               type="text"
@@ -179,11 +226,11 @@ export default function UUIDGenerator() {
                 setV5Status('idle');
                 setV5Error('');
               }}
-              placeholder="例如：123e4567-e89b-12d3-a456-426614174000"
+              placeholder={copy.sections.v5.customNamespacePlaceholder}
             />
           </>
         ) : null}
-        <label htmlFor="uuid-name">名称</label>
+        <label htmlFor="uuid-name">{copy.sections.v5.nameLabel}</label>
         <input
           id="uuid-name"
           type="text"
@@ -193,7 +240,7 @@ export default function UUIDGenerator() {
             setV5Status('idle');
             setV5Error('');
           }}
-          placeholder="输入名称（如域名 example.com）"
+          placeholder={copy.sections.v5.namePlaceholder}
         />
         <div className="uuid-actions">
           <button
@@ -202,28 +249,28 @@ export default function UUIDGenerator() {
             onClick={handleGenerateV5}
             disabled={namespaceInvalid}
           >
-            {v5Status === 'pending' ? '生成中…' : '生成 v5'}
+            {v5Status === 'pending' ? copy.sections.v5.buttons.pending : copy.sections.v5.buttons.generate}
           </button>
           <button type="button" className="secondary" onClick={() => handleCopy(v5Uuid, 'v5')} disabled={!v5Uuid}>
-            {copied === 'v5' ? '已复制' : '复制'}
+            {copied === 'v5' ? copy.sections.v5.buttons.copied : copy.sections.v5.buttons.copy}
           </button>
         </div>
         {v5Error ? <p className="error">{v5Error}</p> : null}
         <div className="uuid-output">
-          <code>{v5Uuid || '生成结果将显示在此处'}</code>
+          <code>{v5Uuid || copy.sections.v5.resultPlaceholder}</code>
         </div>
       </section>
       <section className="section">
         <header className="section-header">
-          <h2>选择合适的 UUID 版本</h2>
-          <p>根据业务需求选择合适的算法，确保 ID 稳定且不冲突。</p>
+          <h2>{copy.guidance.title}</h2>
+          <p>{copy.guidance.description}</p>
         </header>
         <ul>
-          <li>v4 随机 UUID 适合生成不可预测的标识符，例如订单号、会话 ID。</li>
-          <li>v1 基于时间戳，便于按时间排序，但包含节点信息，适合内部系统使用。</li>
-          <li>v5 将命名空间与名称哈希成固定值，适用于根据域名、路径生成稳定 ID。</li>
+          {copy.guidance.bullets.map((bullet) => (
+            <li key={bullet}>{bullet}</li>
+          ))}
         </ul>
-        <p className="hint">生成结果保留在本地，复制后可直接粘贴到代码、数据库或配置文件中。</p>
+        <p className="hint">{copy.guidance.hint}</p>
       </section>
     </main>
   );

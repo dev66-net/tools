@@ -1,9 +1,42 @@
 import { ChangeEvent, useState } from 'react';
+import { useI18n } from './i18n/index';
 import { randomIntInclusive, supportsCryptoRandom } from './utils/random.ts';
 
 const MAX_COUNT = 100;
 
 type CopyState = 'idle' | 'copied';
+
+type RandomNumberGeneratorCopy = {
+  title: string;
+  description: string;
+  form: {
+    minLabel: string;
+    maxLabel: string;
+    countLabel: string;
+    generate: string;
+    copy: string;
+    copied: string;
+    preferCryptoLabel: string;
+    errors: {
+      invalidBounds: string;
+      invalidCount: string;
+      maxCount: string;
+      invertedRange: string;
+      generic: string;
+    };
+  };
+  results: {
+    cryptoUsed: string;
+    cryptoFallback: string;
+    mathUsed: string;
+  };
+  guidance: {
+    title: string;
+    description: string;
+    bullets: string[];
+    hint: string;
+  };
+};
 
 async function copyToClipboard(text: string): Promise<boolean> {
   if (!text) {
@@ -32,6 +65,8 @@ async function copyToClipboard(text: string): Promise<boolean> {
 }
 
 export default function RandomNumberGenerator() {
+  const { translations } = useI18n();
+  const copy = translations.tools.randomNumberGenerator.page as RandomNumberGeneratorCopy;
   const [min, setMin] = useState('1');
   const [max, setMax] = useState('100');
   const [count, setCount] = useState('1');
@@ -49,22 +84,22 @@ export default function RandomNumberGenerator() {
     const countValue = Number(count);
 
     if (!Number.isFinite(minValue) || !Number.isFinite(maxValue)) {
-      setError('请输入有效的上下界。');
+      setError(copy.form.errors.invalidBounds);
       return;
     }
     if (Number.isNaN(countValue) || countValue < 1) {
-      setError('生成数量必须大于等于 1。');
+      setError(copy.form.errors.invalidCount);
       return;
     }
     if (countValue > MAX_COUNT) {
-      setError(`一次最多生成 ${MAX_COUNT} 个随机数。`);
+      setError(copy.form.errors.maxCount.replace('{count}', String(MAX_COUNT)));
       return;
     }
 
     const lower = Math.ceil(minValue);
     const upper = Math.floor(maxValue);
     if (upper < lower) {
-      setError('上界必须大于或等于下界。');
+      setError(copy.form.errors.invertedRange);
       return;
     }
 
@@ -79,7 +114,7 @@ export default function RandomNumberGenerator() {
       setResults(output);
       setUsedCrypto(cryptoUsed);
     } catch (generateError) {
-      setError((generateError as Error).message || '随机数生成失败。');
+      setError((generateError as Error).message || copy.form.errors.generic);
       setResults([]);
       setUsedCrypto(false);
     }
@@ -98,14 +133,12 @@ export default function RandomNumberGenerator() {
 
   return (
     <main className="card">
-      <h1>随机数生成器：生成安全随机整数</h1>
-      <p className="card-description">
-        设定上下限与数量后即可生成随机整数，并可优先启用加密安全随机源，满足抽奖、测试数据等多种场景。
-      </p>
+      <h1>{copy.title}</h1>
+      <p className="card-description">{copy.description}</p>
       <section className="section">
         <div className="form-grid">
           <div className="form-field">
-            <label htmlFor="rng-min">最小值</label>
+            <label htmlFor="rng-min">{copy.form.minLabel}</label>
             <input
               id="rng-min"
               type="number"
@@ -114,7 +147,7 @@ export default function RandomNumberGenerator() {
             />
           </div>
           <div className="form-field">
-            <label htmlFor="rng-max">最大值</label>
+            <label htmlFor="rng-max">{copy.form.maxLabel}</label>
             <input
               id="rng-max"
               type="number"
@@ -123,7 +156,7 @@ export default function RandomNumberGenerator() {
             />
           </div>
           <div className="form-field">
-            <label htmlFor="rng-count">数量</label>
+            <label htmlFor="rng-count">{copy.form.countLabel}</label>
             <input
               id="rng-count"
               type="number"
@@ -140,15 +173,15 @@ export default function RandomNumberGenerator() {
             checked={preferCrypto}
             onChange={(event: ChangeEvent<HTMLInputElement>) => setPreferCrypto(event.target.checked)}
           />
-          优先使用加密安全的随机源
+          {copy.form.preferCryptoLabel}
         </label>
         {error ? <p className="error">{error}</p> : null}
         <div className="actions">
           <button type="button" className="secondary" onClick={handleGenerate}>
-            生成随机数
+            {copy.form.generate}
           </button>
           <button type="button" className="secondary" onClick={handleCopy} disabled={results.length === 0}>
-            {copyState === 'copied' ? '已复制' : '复制结果'}
+            {copyState === 'copied' ? copy.form.copied : copy.form.copy}
           </button>
         </div>
         {results.length > 0 ? (
@@ -156,9 +189,9 @@ export default function RandomNumberGenerator() {
             <p className="hint">
               {preferCrypto
                 ? usedCrypto
-                  ? '已使用加密安全随机源生成结果。'
-                  : '未检测到加密安全随机源，已回退至 Math.random()。'
-                : '已使用 Math.random() 生成结果。'}
+                  ? copy.results.cryptoUsed
+                  : copy.results.cryptoFallback
+                : copy.results.mathUsed}
             </p>
             <div className="random-results">
               {results.map((value, index) => (
@@ -172,15 +205,15 @@ export default function RandomNumberGenerator() {
       </section>
       <section className="section">
         <header className="section-header">
-          <h2>随机数应用建议</h2>
-          <p>根据用途选择合适的随机源与数量，确保结果可信且易于复现。</p>
+          <h2>{copy.guidance.title}</h2>
+          <p>{copy.guidance.description}</p>
         </header>
         <ul>
-          <li>启用“加密安全随机源”可用于抽奖、验证码等需要防预测的场景。</li>
-          <li>批量输出后可点击“复制结果”一次性粘贴到电子表格或测试脚本。</li>
-          <li>如果需要可重复的结果，建议记录生成参数并在外部脚本中固定随机种子。</li>
+          {copy.guidance.bullets.map((bullet) => (
+            <li key={bullet}>{bullet}</li>
+          ))}
         </ul>
-        <p className="hint">浏览器环境无法获取硬件噪声，仅依赖 Web Crypto 或 Math.random() 完成随机生成。</p>
+        <p className="hint">{copy.guidance.hint}</p>
       </section>
     </main>
   );

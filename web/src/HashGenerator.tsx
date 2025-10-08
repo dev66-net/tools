@@ -1,4 +1,5 @@
 import { ChangeEvent, useEffect, useMemo, useState } from 'react';
+import { useI18n } from './i18n/index';
 import { bytesToHex, utf8ToBytes } from './utils/bytes.ts';
 import { md5Bytes } from './utils/hash.ts';
 
@@ -30,6 +31,43 @@ function bytesToBase64(bytes: Uint8Array): string {
   return btoa(binary);
 }
 
+type HashGeneratorCopy = {
+  title: string;
+  description: string;
+  input: {
+    label: string;
+    placeholder: string;
+    byteLength: string;
+    clear: string;
+  };
+  results: {
+    title: string;
+    emptyHint: string;
+    columns: {
+      algorithm: string;
+      hex: string;
+      base64: string;
+    };
+    buttons: {
+      copy: string;
+      copied: string;
+    };
+    status: {
+      pending: string;
+    };
+    errors: {
+      unsupported: string;
+      generic: string;
+    };
+  };
+  section: {
+    title: string;
+    description: string;
+    bullets: string[];
+    hint: string;
+  };
+};
+
 async function copyToClipboard(text: string): Promise<boolean> {
   if (!text) {
     return false;
@@ -57,6 +95,8 @@ async function copyToClipboard(text: string): Promise<boolean> {
 }
 
 export default function HashGenerator() {
+  const { translations } = useI18n();
+  const copy = translations.tools.hashGenerator.page as HashGeneratorCopy;
   const [source, setSource] = useState('');
   const [rows, setRows] = useState<HashRow[]>([]);
   const [copiedKey, setCopiedKey] = useState<CopyKey | ''>('');
@@ -82,8 +122,8 @@ export default function HashGenerator() {
     if (!subtle) {
       setRows([
         md5Row,
-        { name: 'SHA-1', hex: '', base64: '', error: '当前环境不支持 Web Crypto Subtle API。' },
-        { name: 'SHA-256', hex: '', base64: '', error: '当前环境不支持 Web Crypto Subtle API。' },
+        { name: 'SHA-1', hex: '', base64: '', error: copy.results.errors.unsupported },
+        { name: 'SHA-256', hex: '', base64: '', error: copy.results.errors.unsupported },
       ]);
       return () => {
         cancelled = true;
@@ -116,7 +156,7 @@ export default function HashGenerator() {
         if (cancelled) {
           return;
         }
-        const message = (error as Error).message || '摘要计算失败。';
+        const message = (error as Error).message || copy.results.errors.generic;
         setRows([
           md5Row,
           { name: 'SHA-1', hex: '', base64: '', error: message },
@@ -128,7 +168,7 @@ export default function HashGenerator() {
     return () => {
       cancelled = true;
     };
-  }, [source]);
+  }, [source, copy.results.errors.generic, copy.results.errors.unsupported]);
 
   const byteLength = useMemo(() => (source ? utf8ToBytes(source).length : 0), [source]);
 
@@ -151,36 +191,34 @@ export default function HashGenerator() {
 
   return (
     <main className="card">
-      <h1>哈希计算器：在线生成 MD5 与 SHA 摘要</h1>
-      <p className="card-description">
-        输入任意文本即可计算 MD5、SHA-1、SHA-256 等常见散列，支持复制 Hex 与 Base64 结果，便于校验文件或接口签名。
-      </p>
+      <h1>{copy.title}</h1>
+      <p className="card-description">{copy.description}</p>
       <section className="section">
-        <label htmlFor="hash-input">待计算文本</label>
+        <label htmlFor="hash-input">{copy.input.label}</label>
         <textarea
           id="hash-input"
           rows={6}
           value={source}
           onChange={handleChange}
-          placeholder="输入或粘贴需要计算哈希值的文本"
+          placeholder={copy.input.placeholder}
         />
-        <div className="hint">UTF-8 字节长度：{byteLength}</div>
+        <div className="hint">{copy.input.byteLength.replace('{count}', String(byteLength))}</div>
         <div className="actions">
           <button type="button" className="secondary" onClick={() => setSource('')} disabled={!source}>
-            清空输入
+            {copy.input.clear}
           </button>
         </div>
       </section>
       <section className="section">
         <header className="section-header">
-          <h2>摘要结果</h2>
+          <h2>{copy.results.title}</h2>
         </header>
-        {rows.length === 0 ? <p className="hint">输入文本后将自动计算。</p> : null}
+        {rows.length === 0 ? <p className="hint">{copy.results.emptyHint}</p> : null}
         <div className="hash-table">
           <div className="hash-table-header">
-            <span>算法</span>
-            <span>Hex</span>
-            <span>Base64</span>
+            <span>{copy.results.columns.algorithm}</span>
+            <span>{copy.results.columns.hex}</span>
+            <span>{copy.results.columns.base64}</span>
           </div>
           {rows.map((row) => (
             <div key={row.name} className="hash-table-row">
@@ -189,7 +227,7 @@ export default function HashGenerator() {
                 {row.error ? (
                   <span className="error">{row.error}</span>
                 ) : row.pending ? (
-                  <span className="hint">计算中…</span>
+                  <span className="hint">{copy.results.status.pending}</span>
                 ) : (
                   <>
                     <code>{row.hex}</code>
@@ -199,14 +237,14 @@ export default function HashGenerator() {
                       onClick={() => handleCopy(row, 'hex')}
                       disabled={!row.hex}
                     >
-                      {copiedKey === `${row.name}-hex` ? '已复制' : '复制'}
+                      {copiedKey === `${row.name}-hex` ? copy.results.buttons.copied : copy.results.buttons.copy}
                     </button>
                   </>
                 )}
               </span>
               <span className="hash-value">
                 {row.error ? null : row.pending ? (
-                  <span className="hint">计算中…</span>
+                  <span className="hint">{copy.results.status.pending}</span>
                 ) : (
                   <>
                     <code>{row.base64}</code>
@@ -216,7 +254,7 @@ export default function HashGenerator() {
                       onClick={() => handleCopy(row, 'base64')}
                       disabled={!row.base64}
                     >
-                      {copiedKey === `${row.name}-base64` ? '已复制' : '复制'}
+                      {copiedKey === `${row.name}-base64` ? copy.results.buttons.copied : copy.results.buttons.copy}
                     </button>
                   </>
                 )}
@@ -227,15 +265,15 @@ export default function HashGenerator() {
       </section>
       <section className="section">
         <header className="section-header">
-          <h2>哈希校验提示</h2>
-          <p>对比 Hex 或 Base64 摘要即可验证内容是否被篡改。</p>
+          <h2>{copy.section.title}</h2>
+          <p>{copy.section.description}</p>
         </header>
         <ul>
-          <li>复制 Hex 摘要用于对照下载页或接口返回的签名，确认文件完整性。</li>
-          <li>Base64 摘要常用于 HTTP 头或数据库字段，点击“复制”即可粘贴到调试工具。</li>
-          <li>处理大文本时哈希计算可能稍有延迟，请耐心等待提示变为“已复制”。</li>
+          {copy.section.bullets.map((bullet) => (
+            <li key={bullet}>{bullet}</li>
+          ))}
         </ul>
-        <p className="hint">工具在浏览器本地计算哈希，可用于处理包含密钥或敏感配置的内容。</p>
+        <p className="hint">{copy.section.hint}</p>
       </section>
     </main>
   );

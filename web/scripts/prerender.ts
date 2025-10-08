@@ -6,9 +6,8 @@ import React from 'react';
 import { renderToPipeableStream } from 'react-dom/server';
 import { MemoryRouter } from 'react-router-dom';
 import App from '../src/App.tsx';
-import tools, { type ToolDefinition } from '../src/tools.tsx';
-import { SUPPORTED_LOCALES, TRANSLATIONS, buildPathForLocale } from '../src/i18n/index.ts';
-import type { LocaleCode } from '../src/i18n/types.ts';
+import tools from '../src/tools.tsx';
+import { collectPageEntries } from './pageData.ts';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const projectRoot = path.resolve(__dirname, '..', '..');
@@ -23,7 +22,10 @@ function escapeHtml(value: string): string {
     .replace(/'/g, '&#39;');
 }
 
-function injectHead(template: string, meta: { title?: string; description?: string; keywords?: string }) {
+function injectHead(
+  template: string,
+  meta: { title?: string; description?: string; keywords?: string | string[] }
+) {
   let output = template;
 
   if (meta.title) {
@@ -34,8 +36,11 @@ function injectHead(template: string, meta: { title?: string; description?: stri
   if (meta.description) {
     metaTags.push(`<meta name="description" content="${escapeHtml(meta.description)}" />`);
   }
-  if (meta.keywords) {
-    metaTags.push(`<meta name="keywords" content="${escapeHtml(meta.keywords)}" />`);
+  const keywordsValue = Array.isArray(meta.keywords)
+    ? meta.keywords.filter(Boolean).join(', ')
+    : meta.keywords;
+  if (keywordsValue) {
+    metaTags.push(`<meta name="keywords" content="${escapeHtml(keywordsValue)}" />`);
   }
 
   if (metaTags.length > 0) {
@@ -44,53 +49,6 @@ function injectHead(template: string, meta: { title?: string; description?: stri
   }
 
   return output;
-}
-
-type PageDefinition = {
-  filePath: string;
-  location: string;
-  title: string;
-  description: string;
-  keywords: string;
-};
-
-function assertToolCopyExists(locale: LocaleCode, toolId: ToolDefinition['id']) {
-  const translations = TRANSLATIONS[locale];
-  const copy = translations.tools[toolId];
-  if (!copy) {
-    throw new Error(`Missing translations for tool "${toolId}" in locale ${locale}`);
-  }
-  return copy;
-}
-
-function createPages(toolList: ToolDefinition[]): PageDefinition[] {
-  const pages: PageDefinition[] = [];
-
-  for (const locale of SUPPORTED_LOCALES) {
-    const translations = TRANSLATIONS[locale];
-    const homePath = buildPathForLocale(locale, 'index');
-    pages.push({
-      filePath: homePath.replace(/^\//u, ''),
-      location: homePath,
-      title: translations.site.mainTitle,
-      description: translations.site.description,
-      keywords: translations.site.keywords.join(', '),
-    });
-
-    for (const tool of toolList) {
-      const toolCopy = assertToolCopyExists(locale, tool.id);
-      const pagePath = buildPathForLocale(locale, tool.slug);
-      pages.push({
-        filePath: pagePath.replace(/^\//u, ''),
-        location: pagePath,
-        title: toolCopy.meta.pageTitle,
-        description: toolCopy.meta.description,
-        keywords: (toolCopy.meta.keywords ?? []).join(', '),
-      });
-    }
-  }
-
-  return pages;
 }
 
 const STREAM_ABORT_DELAY = 5000;
@@ -150,14 +108,18 @@ async function prerender() {
     }
   }
 
-  const pages = createPages(tools);
+  const pages = collectPageEntries();
 
   await mkdir(distDir, { recursive: true });
 
   for (const page of pages) {
     const appHtml = await renderPage(page.location);
     let html = template.replace('<div id="root"></div>', `<div id="root">${appHtml}</div>`);
-    html = injectHead(html, page);
+    html = injectHead(html, {
+      title: page.title,
+      description: page.description,
+      keywords: page.keywords,
+    });
     const target = path.join(distDir, page.filePath);
     await mkdir(path.dirname(target), { recursive: true });
     await writeFile(target, html, 'utf-8');
