@@ -362,6 +362,11 @@ body.print-mode {
   margin: 0 auto;
 }
 
+.card--full-width {
+  width: 100%;
+  max-width: none;
+}
+
 .card-description {
   margin: -0.5rem 0 1.8rem;
   text-align: center;

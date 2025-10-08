@@ -14,7 +14,8 @@ export type ToolId =
   | 'hashGenerator'
   | 'uuidGenerator'
   | 'randomNumberGenerator'
-  | 'randomStringGenerator';
+  | 'randomStringGenerator'
+  | 'blockPuzzleSolver';
 
 export type ToolDefinition = {
   id: ToolId;
@@ -62,6 +63,9 @@ const RandomNumberGenerator = lazy(loadRandomNumberGenerator);
 
 const loadRandomStringGenerator = () => import('./RandomStringGenerator.tsx');
 const RandomStringGenerator = lazy(loadRandomStringGenerator);
+
+const loadBlockPuzzleSolver = () => import('./BlockPuzzleSolver.tsx');
+const BlockPuzzleSolver = lazy(loadBlockPuzzleSolver);
 
 export const tools: ToolDefinition[] = [
   {
@@ -154,6 +158,13 @@ export const tools: ToolDefinition[] = [
     executionMode: 'browser',
     Component: RandomStringGenerator,
     preload: loadRandomStringGenerator,
+  },
+  {
+    id: 'blockPuzzleSolver',
+    slug: 'block-puzzle-solver',
+    executionMode: 'browser',
+    Component: BlockPuzzleSolver,
+    preload: loadBlockPuzzleSolver,
   },
 ];
 
