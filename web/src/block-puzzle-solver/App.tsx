@@ -327,34 +327,38 @@ export default function BlockPuzzleSolverApp({ labels = fallbackLabels }: BlockP
         )}
       </div>
       <div className="block-puzzle-toolbar">
-        <button type="button" onClick={handleRunSolver}>
-          {labels.startSolver}
-        </button>
-        <button type="button" onClick={handleApplySolution}>
-          {labels.applySolution}
-        </button>
-        <button
-          type="button"
-          onClick={() => {
-            setPlacedBlocks(Map());
-            setBlockDirections(Map());
-            setAvailableBlocks(List(DEFAULT_BLOCKS));
-            setAvailableBlockPositions(Map());
-            setSelectedBlock(EMPTY_BLOCK);
-            setSolverResult({ items: [] });
-            setCanPlace(false);
-            setSearchCount(0);
-            setSolverStatus('idle');
-          }}
-        >
-          {labels.resetBoard}
-        </button>
-        <span>
+        <div className="block-puzzle-toolbar-actions">
+          <button type="button" onClick={handleRunSolver}>
+            {labels.startSolver}
+          </button>
+          <button type="button" onClick={handleApplySolution}>
+            {labels.applySolution}
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setPlacedBlocks(Map());
+              setBlockDirections(Map());
+              setAvailableBlocks(List(DEFAULT_BLOCKS));
+              setAvailableBlockPositions(Map());
+              setSelectedBlock(EMPTY_BLOCK);
+              setSolverResult({ items: [] });
+              setCanPlace(false);
+              setSearchCount(0);
+              setSolverStatus('idle');
+            }}
+          >
+            {labels.resetBoard}
+          </button>
+        </div>
+        <div className="block-puzzle-toolbar-feedback">
           {labels.searchLabel}: {searchCount}
           {solverStatus === 'running' && ' (求解中...)'}
-          {solverStatus === 'success' && <span style={{ color: 'green' }}> (搜索成功有解答)</span>}
+          {solverStatus === 'success' && (
+            <span style={{ color: 'green' }}> (搜索成功有解答)</span>
+          )}
           {solverStatus === 'failed' && <span style={{ color: 'red' }}> (无解)</span>}
-        </span>
+        </div>
       </div>
     </div>
   );
