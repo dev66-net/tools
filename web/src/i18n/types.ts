@@ -52,6 +52,11 @@ export type HomeCopy = {
     linkLabel: string;
     linkSlug: string;
   };
+  issueLink: {
+    text: string;
+    linkLabel: string;
+    href: string;
+  };
 };
 
 export type LanguageMenuCopy = {

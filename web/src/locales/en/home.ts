@@ -30,6 +30,11 @@ const home: HomeCopy = {
     linkLabel: 'Start with the QR code generator',
     linkSlug: 'qr-generator',
   },
+  issueLink: {
+    text: 'Ran into a problem or need a new tool? ',
+    linkLabel: 'Create an issue on GitHub',
+    href: 'https://github.com/dev66-net/tools/issues/new',
+  },
 };
 
 export default home;

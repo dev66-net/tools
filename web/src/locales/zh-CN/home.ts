@@ -30,6 +30,11 @@ const home: HomeCopy = {
     linkLabel: '从二维码生成器开始',
     linkSlug: 'qr-generator',
   },
+  issueLink: {
+    text: '遇到问题或希望新增工具？',
+    linkLabel: '前往 GitHub 创建 Issue',
+    href: 'https://github.com/dev66-net/tools/issues/new',
+  },
 };
 
 export default home;

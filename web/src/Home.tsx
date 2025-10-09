@@ -68,6 +68,12 @@ export default function Home() {
           {home.cta.text}
           <Link to={{ pathname: ctaHref }}>{home.cta.linkLabel}</Link>
         </p>
+        <p className="hint">
+          {home.issueLink.text}
+          <a href={home.issueLink.href} target="_blank" rel="noopener noreferrer">
+            {home.issueLink.linkLabel}
+          </a>
+        </p>
       </section>
     </main>
   );
