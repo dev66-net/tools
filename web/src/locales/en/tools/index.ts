@@ -15,6 +15,7 @@ import randomStringGenerator from './randomStringGenerator';
 import blockPuzzleSolver from './blockPuzzleSolver';
 import urlParser from './urlParser';
 import uuidGenerator from './uuidGenerator';
+import zipTool from './zipTool';
 
 const tools: Record<ToolId, ToolCopy> = {
   qrGenerator,
@@ -31,6 +32,7 @@ const tools: Record<ToolId, ToolCopy> = {
   randomNumberGenerator,
   randomStringGenerator,
   blockPuzzleSolver,
+  zipTool,
 };
 
 export default tools;

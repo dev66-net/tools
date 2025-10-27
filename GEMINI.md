@@ -1,0 +1,1 @@
+Please read first: [AGENTS.md](AGENTS.md)

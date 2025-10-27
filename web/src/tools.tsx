@@ -15,7 +15,8 @@ export type ToolId =
   | 'uuidGenerator'
   | 'randomNumberGenerator'
   | 'randomStringGenerator'
-  | 'blockPuzzleSolver';
+  | 'blockPuzzleSolver'
+  | 'zipTool';
 
 export type ToolDefinition = {
   id: ToolId;
@@ -66,6 +67,9 @@ const RandomStringGenerator = lazy(loadRandomStringGenerator);
 
 const loadBlockPuzzleSolver = () => import('./BlockPuzzleSolver.tsx');
 const BlockPuzzleSolver = lazy(loadBlockPuzzleSolver);
+
+const loadZipTool = () => import('./ZipTool.tsx');
+const ZipTool = lazy(loadZipTool);
 
 export const tools: ToolDefinition[] = [
   {
@@ -165,6 +169,13 @@ export const tools: ToolDefinition[] = [
     executionMode: 'browser',
     Component: BlockPuzzleSolver,
     preload: loadBlockPuzzleSolver,
+  },
+  {
+    id: 'zipTool',
+    slug: 'zip-online',
+    executionMode: 'browser',
+    Component: ZipTool,
+    preload: loadZipTool,
   },
 ];
 
