@@ -1,4 +1,5 @@
 {
   "files": [],
+  "allowImportingTsExtensions": true,
   "references": [{ "path": "./web/tsconfig.json" }]
 }

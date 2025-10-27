@@ -34,12 +34,16 @@ function injectHead(
 
   const metaTags: string[] = [];
   if (meta.description) {
+    // 先移除现有的description meta标签（支持多行），再添加新的
+    output = output.replace(/<meta\s+name="description"\s+content="[^"]*"\s*\/>/g, '');
     metaTags.push(`<meta name="description" content="${escapeHtml(meta.description)}" />`);
   }
   const keywordsValue = Array.isArray(meta.keywords)
     ? meta.keywords.filter(Boolean).join(', ')
     : meta.keywords;
   if (keywordsValue) {
+    // 先移除现有的keywords meta标签（支持多行），再添加新的
+    output = output.replace(/<meta\s+name="keywords"\s+content="[^"]*"\s*\/>/g, '');
     metaTags.push(`<meta name="keywords" content="${escapeHtml(keywordsValue)}" />`);
   }
 
