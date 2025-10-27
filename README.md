@@ -19,6 +19,7 @@ English | [简体中文](README-cn.md)
 - [**UUID Generator**](https://tools.dev66.net/uuid-generator.html) – generate UUID v1, v4 and v5 in bulk with namespace presets and formatting controls.
 - [**Random Number Generator**](https://tools.dev66.net/random-number-generator.html) – produce cryptographically strong integers in custom ranges with batching support.
 - [**Random String Generator**](https://tools.dev66.net/random-string-generator.html) – build secure tokens from configurable character sets, lengths and batch sizes.
+- [**ZIP Utility**](https://tools.dev66.net/zip-online.html) – compress files/folders into ZIP archives and extract ZIP contents, all locally in-browser with WebAssembly.
 
 ## Project Layout
 - `web/` – Vite + React front-end (`App.tsx` wires routes, layout and search; tools reside in dedicated components).

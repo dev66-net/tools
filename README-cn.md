@@ -19,6 +19,7 @@
 - **UUID 生成器**：批量生成 UUID v1/v4/v5，支持命名空间与格式选项。中文版入口：[https://tools.dev66.net/zh-cn/uuid-generator.html](https://tools.dev66.net/zh-cn/uuid-generator.html)
 - **随机数生成器**：在指定范围内产生高强度随机整数，可批量输出。中文版入口：[https://tools.dev66.net/zh-cn/random-number-generator.html](https://tools.dev66.net/zh-cn/random-number-generator.html)
 - **随机字符串生成器**：按字符集、长度与数量自定义生成安全 Token。中文版入口：[https://tools.dev66.net/zh-cn/random-string-generator.html](https://tools.dev66.net/zh-cn/random-string-generator.html)
+- **ZIP 在线工具**：浏览器内压缩文件/文件夹为 ZIP，解压 ZIP 内容，基于 WebAssembly 本地执行。中文版入口：[https://tools.dev66.net/zh-cn/zip-online.html](https://tools.dev66.net/zh-cn/zip-online.html)
 
 ## 目录结构
 - `web/`：Vite + React 前端；`App.tsx` 负责布局、路由与搜索，各工具独立成组件。
