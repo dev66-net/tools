@@ -82,7 +82,7 @@ export default function QRGenerator() {
     setQrValue(trimmed);
   };
 
-  const handleInputChange = (event: ChangeEvent<HTMLInputElement>) => {
+  const handleInputChange = (event: ChangeEvent<HTMLTextAreaElement>) => {
     const value = event.target.value;
     setFormValue(value);
 
@@ -106,14 +106,15 @@ export default function QRGenerator() {
       <h1>{copy.title}</h1>
       <p className="card-description">{copy.description}</p>
       <form onSubmit={handleSubmit} className="form" autoComplete="off">
-        <label htmlFor="url-input">{copy.form.inputLabel}</label>
-        <input
-          id="url-input"
-          type="text"
+        <label htmlFor="text-input">{copy.form.inputLabel}</label>
+        <textarea
+          id="text-input"
           value={formValue}
           onChange={handleInputChange}
           placeholder={copy.form.placeholder}
           required
+          rows={4}
+          cols={50}
         />
         {error && <p className="form-error">{error}</p>}
         <label className="auto-toggle">

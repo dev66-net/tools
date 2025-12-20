@@ -8,6 +8,12 @@ export default defineConfig({
     outDir: '../dist',
     emptyOutDir: true,
   },
+  worker: {
+    format: 'es',
+  },
+  optimizeDeps: {
+    exclude: ['cubing'],
+  },
   server: {
     port: 5173,
   },

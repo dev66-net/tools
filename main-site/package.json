@@ -1,0 +1,28 @@
+{
+  "name": "main-site",
+  "version": "1.0.0",
+  "description": "Dev66 - Developer Tools Collection",
+  "type": "module",
+  "scripts": {
+    "dev": "vite dev --host --port 5174",
+    "build": "vite build && vite-node scripts/prerender.ts",
+    "build:assets": "vite build",
+    "prerender": "vite-node scripts/prerender.ts",
+    "preview": "vite preview --host",
+    "type-check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-router-dom": "^7.9.3"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "@vitejs/plugin-react": "^4.3.4",
+    "typescript": "^5.5.4",
+    "vite": "^5.4.7",
+    "vite-node": "^1.6.0",
+    "wrangler": "^4.42.0"
+  }
+}

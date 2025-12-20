@@ -837,11 +837,13 @@ button.link:hover {
 .markdown-grid {
   display: grid;
   gap: 1.5rem;
+  align-items: start;
 }
 
 @media (min-width: 900px) {
   .markdown-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: stretch;
   }
 }
 
@@ -853,6 +855,7 @@ button.link:hover {
   background: rgba(248, 250, 252, 0.82);
   border: 1px solid rgba(148, 163, 184, 0.45);
   box-shadow: 0 14px 30px rgba(15, 23, 42, 0.14);
+  height: fit-content;
 }
 
 .markdown-panel-header {
@@ -883,6 +886,7 @@ button.link:hover {
 
 .markdown-textarea {
   min-height: 320px;
+  max-height: 80vh;
   padding: 1rem 1.2rem;
   border-radius: 14px;
   border: 1px solid rgba(148, 163, 184, 0.55);

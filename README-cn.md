@@ -3,6 +3,8 @@
 [English](README.md) | 简体中文
 
 ## 项目简介
+访问 **[dev66.net](https://dev66.net)** – 查看所有可用工具的主入口。
+
 [tools.dev66.net](https://tools.dev66.net/) 是一个开源的前端开发者工具合集，前端基于 Vite + React 构建并以静态资源形式部署，由 Cloudflare Worker 提供分发与域名重定向。所有数据处理都在浏览器本地完成，粘贴的内容不会离开你的设备。
 
 ## 现有功能

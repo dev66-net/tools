@@ -1,0 +1,19 @@
+name = "main-site"
+main = "src/worker.js"
+compatibility_date = "2024-05-01"
+workers_dev = true
+
+[assets]
+directory = "dist"
+binding = "ASSETS"
+html_handling = "none"
+
+[[routes]]
+pattern = "dev66.net"
+custom_domain = true
+
+[env.production]
+name = "main-site"
+routes = [
+  { pattern = "dev66.net", custom_domain = true }
+]

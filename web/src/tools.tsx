@@ -16,7 +16,8 @@ export type ToolId =
   | 'randomNumberGenerator'
   | 'randomStringGenerator'
   | 'blockPuzzleSolver'
-  | 'zipTool';
+  | 'zipTool'
+  | 'rubiksCubeSolver';
 
 export type ToolDefinition = {
   id: ToolId;
@@ -70,6 +71,9 @@ const BlockPuzzleSolver = lazy(loadBlockPuzzleSolver);
 
 const loadZipTool = () => import('./ZipTool.tsx');
 const ZipTool = lazy(loadZipTool);
+
+const loadRubiksCubeSolver = () => import('./RubiksCubeSolver.tsx');
+const RubiksCubeSolver = lazy(loadRubiksCubeSolver);
 
 export const tools: ToolDefinition[] = [
   {
@@ -177,6 +181,13 @@ export const tools: ToolDefinition[] = [
     Component: ZipTool,
     preload: loadZipTool,
   },
+  // {
+  //   id: 'rubiksCubeSolver',
+  //   slug: 'rubiks-cube-solver',
+  //   executionMode: 'browser',
+  //   Component: RubiksCubeSolver,
+  //   preload: loadRubiksCubeSolver,
+  // },
 ];
 
 export default tools;

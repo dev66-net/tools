@@ -16,6 +16,7 @@ import blockPuzzleSolver from './blockPuzzleSolver';
 import urlParser from './urlParser';
 import uuidGenerator from './uuidGenerator';
 import zipTool from './zipTool';
+import rubiksCubeSolver from './rubiksCubeSolver';
 
 const tools: Record<ToolId, ToolCopy> = {
   qrGenerator,
@@ -33,6 +34,7 @@ const tools: Record<ToolId, ToolCopy> = {
   randomStringGenerator,
   blockPuzzleSolver,
   zipTool,
+  rubiksCubeSolver,
 };
 
 export default tools;

@@ -1,0 +1,13 @@
+name = "main-site-test"
+main = "src/worker.js"
+compatibility_date = "2024-05-01"
+workers_dev = true
+
+[assets]
+directory = "dist"
+binding = "ASSETS"
+html_handling = "none"
+
+[[routes]]
+pattern = "test.dev66.net"
+custom_domain = true

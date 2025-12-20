@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dev66 - 开发者工具集合</title>
+  <meta name="description" content="包含二维码生成器、JSON格式化、编码转换等15+开发者工具的在线集合。所有工具均在浏览器中本地运行，无需服务器。" />
+  <meta name="keywords" content="开发者工具, 在线工具, 二维码, JSON格式化, Base64, 十六进制转换, JWT解码" />
+
+  <!-- Open Graph -->
+  <meta property="og:title" content="Dev66 - 开发者工具集合" />
+  <meta property="og:description" content="包含15+开发者工具的在线集合，所有工具均在浏览器中本地运行。" />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://dev66.net/zh-cn" />
+
+  <!-- Canonical and hreflang -->
+  <link rel="canonical" href="https://dev66.net/zh-cn" />
+  <link rel="alternate" hreflang="en" href="https://dev66.net" />
+  <link rel="alternate" hreflang="zh-CN" href="https://dev66.net/zh-cn" />
+  <link rel="alternate" hreflang="x-default" href="https://dev66.net" />
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <link rel="icon" type="image/png" href="/favicon.png" />
+
+  <!-- Preconnect to tools domain -->
+  <link rel="preconnect" href="https://tools.dev66.net" />
+  <link rel="dns-prefetch" href="https://tools.dev66.net" />
+</head>
+<body>
+  <div id="root"></div>
+  <script>
+    // 注入初始语言到全局变量
+    window.__INITIAL_LOCALE__ = 'zh-cn';
+  </script>
+  <script type="module" src="/src/main.tsx"></script>
+</body>
+</html>

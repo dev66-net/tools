@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="__DESCRIPTION__" />
+  <meta name="keywords" content="__KEYWORDS__" />
+
+  <!-- Open Graph -->
+  <meta property="og:title" content="__TITLE__" />
+  <meta property="og:description" content="__DESCRIPTION__" />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://dev66.net" />
+
+  <!-- Canonical and hreflang -->
+  <link rel="canonical" href="https://dev66.net" />
+  <link rel="alternate" hreflang="en" href="https://dev66.net" />
+  <link rel="alternate" hreflang="zh-CN" href="https://dev66.net/zh-cn" />
+  <link rel="alternate" hreflang="x-default" href="https://dev66.net" />
+
+  <!-- Preload critical resources -->
+  <link rel="preload" href="__CSS_PATH__" as="style" />
+  <link rel="preload" href="__JS_PATH__" as="script" />
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <link rel="icon" type="image/png" href="/favicon.png" />
+
+  <!-- Styles -->
+  <link href="__CSS_PATH__" rel="stylesheet" />
+
+  <title>__TITLE__</title>
+</head>
+<body>
+  <div id="root">
+    <!-- Loading indicator while React loads -->
+    <div style="min-height: 100vh; display: flex; align-items: center; justify-content: center; font-family: system-ui, -apple-system, sans-serif;">
+      <style>
+        .loader {
+          width: 48px;
+          height: 48px;
+          border: 4px solid #f3f3f3;
+          border-top: 4px solid #3b82f6;
+          border-radius: 50%;
+          animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+      </style>
+      <div class="loader"></div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="__JS_PATH__" type="module"></script>
+</body>
+</html>

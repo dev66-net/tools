@@ -3,6 +3,8 @@
 English | [简体中文](README-cn.md)
 
 ## Overview
+Visit **[dev66.net](https://dev66.net)** – the main entry point showcasing all available tools.
+
 [tools.dev66.net](https://tools.dev66.net/) is an open-source collection of browser-first developer utilities. The front-end runs on Vite + React and ships as static assets, while a Cloudflare Worker serves the bundle and handles canonical domain redirects. All tool logic executes locally in the browser so that pasted data never leaves your machine.
 
 ## Features
