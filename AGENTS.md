@@ -51,5 +51,49 @@
 - 手动校验：每次发版前访问 `/index.html`、`/zh-cn/index.html` 等关键页面，确认文案、 hreflang 与 canonical 标签准确无误。
 - 文案组织：翻译按语言与工具拆分存放，例如 `web/src/locales/en/home.ts`、`web/src/locales/en/tools/qrGenerator.ts`、`web/src/locales/zh-CN/tools/qrGenerator.ts`；各语言通过 `index.ts` 聚合后再在 `i18n` 中引用。
 
+## 域名部署注意事项（⚠️ 重要）
+
+### 域名架构
+- **主域名**: `dev66.net` - Main Site，展示所有工具入口的主站
+- **工具域名**: `tools.dev66.net` - 实际的工具应用，提供具体的工具功能
+
+### 部署规范
+1. **Main Site 部署** (`main-site/` 目录):
+   ```bash
+   cd main-site
+   wrangler deploy --assets dist
+   ```
+   使用 `main-site/wrangler.toml` 配置，绑定到 `dev66.net`
+
+2. **Tools 应用部署** (根目录):
+   ```bash
+   # 从根目录执行
+   pnpm build:web
+   wrangler deploy --assets dist
+   ```
+   使用根目录的 `wrangler.toml` 配置，绑定到 `tools.dev66.net`
+
+### ⚠️ 避免的部署错误
+**不要**从根目录执行以下命令：
+```bash
+# ❌ 错误！这会覆盖 tools.dev66.net 的内容
+wrangler deploy --assets main-site/dist --name dev66-main-site
+```
+
+**错误原因**: 该命令使用根目录的 `wrangler.toml`（配置为 `tools.dev66.net`），但部署的是 main-site 的内容，导致 tools.dev66.net 显示主站内容。
+
+### 验证部署
+每次部署后验证域名内容：
+- `https://dev66.net` → 应显示 "Dev66 - Developer Tools Collection"
+- `https://tools.dev66.net` → 应显示 "tools.dev66.net Developer Toolkit"
+
+### 项目文件说明
+- `main-site/` - 独立的 React 项目，用于主站点
+  - 独立的 `package.json`、`vite.config.ts`、`wrangler.toml`
+  - 使用 SSR 预渲染生成完整 HTML，SEO 友好
+- `web/` - 工具应用的前端代码
+- `src/` - Worker 和其他共享代码
+- 根目录 `wrangler.toml` - 配置 tools.dev66.net
+
 ## 语言约定
 - 默认使用中文进行沟通、说明与思考输出；所有代码、代码注释及 Git 提交信息保持英文。
