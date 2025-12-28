@@ -1,10 +1,11 @@
-import { ChangeEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { ChangeEvent, useCallback, useEffect, useMemo, useRef, useState, memo } from 'react';
 import ReactMarkdown from 'react-markdown';
 import type { Components } from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { useLocation } from 'react-router-dom';
 import mermaid from 'mermaid';
 import { useI18n } from './i18n/index';
+import MarkdownEditor from './components/MarkdownEditor';
 
 const PRINT_STORAGE_KEY = 'markdown-renderer:print-payload';
 
@@ -160,6 +161,33 @@ function MermaidDiagram({ code, ariaLabel, errorMessage, onRender }: MermaidDiag
   return <div ref={containerRef} className="markdown-mermaid" role="img" aria-label={ariaLabel} />;
 }
 
+// Optimized preview panel component
+const PreviewPanel = memo(({
+  content,
+  remarkPlugins,
+  markdownComponents,
+  copy
+}: {
+  content: string;
+  remarkPlugins: Array<unknown>;
+  markdownComponents: Components;
+  copy: MarkdownRendererCopy;
+}) => {
+  return (
+    <div className="markdown-preview" aria-live="polite">
+      {content ? (
+        <ReactMarkdown remarkPlugins={remarkPlugins} components={markdownComponents}>
+          {content}
+        </ReactMarkdown>
+      ) : (
+        <p className="markdown-empty">{copy.preview.empty}</p>
+      )}
+    </div>
+  );
+});
+
+PreviewPanel.displayName = 'PreviewPanel';
+
 const printStyles = `
   :root {
     color-scheme: light;
@@ -254,7 +282,30 @@ export default function MarkdownRenderer() {
     }
     return true;
   });
+  const [isFullscreen, setIsFullscreen] = useState(false);
   const previewRef = useRef<HTMLDivElement | null>(null);
+  const editorRef = useRef<HTMLDivElement | null>(null);
+
+  // Handle ESC key to exit fullscreen
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && isFullscreen) {
+        setIsFullscreen(false);
+      }
+    };
+
+    if (isFullscreen) {
+      document.addEventListener('keydown', handleKeyDown);
+      document.body.style.overflow = 'hidden'; // Prevent background scrolling
+    } else {
+      document.body.style.overflow = '';
+    }
+
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+      document.body.style.overflow = '';
+    };
+  }, [isFullscreen]);
 
   const remarkPlugins = useMemo(() => {
     const plugins = [] as Array<unknown>;
@@ -391,6 +442,10 @@ export default function MarkdownRenderer() {
     setSource('');
   }, []);
 
+  const toggleFullscreen = useCallback(() => {
+    setIsFullscreen(prev => !prev);
+  }, []);
+
   const handlePrint = useCallback(() => {
     if (!hasContent) {
       return;
@@ -458,7 +513,7 @@ export default function MarkdownRenderer() {
   }
 
   return (
-    <main className="card markdown-card">
+    <main className={`card markdown-card ${isFullscreen ? 'fullscreen-mode' : ''}`}>
       <h1>{copy.title}</h1>
       <p className="card-description">{copy.description}</p>
 
@@ -476,14 +531,15 @@ export default function MarkdownRenderer() {
                   : copy.input.charCount.empty}
               </span>
             </header>
-            <textarea
-              id="markdown-source"
-              className="markdown-textarea"
-              value={source}
-              onChange={handleSourceChange}
-              placeholder={copy.input.placeholder}
-              aria-label={copy.input.ariaLabel}
-            />
+            <div ref={editorRef}>
+              <MarkdownEditor
+                value={source}
+                onChange={setSource}
+                placeholder={copy.input.placeholder}
+                minHeight={120}
+                theme="auto"
+              />
+            </div>
             <div className="markdown-toolbar">
               <label className="markdown-checkbox">
                 <input
@@ -510,23 +566,41 @@ export default function MarkdownRenderer() {
                 <h2>{copy.preview.title}</h2>
                 <p>{copy.preview.description}</p>
               </div>
-              <button
-                type="button"
-                onClick={handlePrint}
-                disabled={!hasContent}
-                aria-label={copy.preview.printAriaLabel}
-              >
-                {copy.preview.printButton}
-              </button>
+              <div style={{ display: 'flex', gap: '0.5rem' }}>
+                <button
+                  type="button"
+                  onClick={handlePrint}
+                  disabled={!hasContent}
+                  aria-label={copy.preview.printAriaLabel}
+                >
+                  {copy.preview.printButton}
+                </button>
+                <button
+                  type="button"
+                  className="fullscreen-button"
+                  onClick={toggleFullscreen}
+                  aria-label={isFullscreen ? "退出全屏" : "全屏"}
+                  title={isFullscreen ? "退出全屏 (ESC)" : "全屏预览"}
+                >
+                  {isFullscreen ? (
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3"/>
+                    </svg>
+                  ) : (
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/>
+                    </svg>
+                  )}
+                </button>
+              </div>
             </header>
-            <div ref={previewRef} className="markdown-preview" aria-live="polite">
-              {hasContent ? (
-                <ReactMarkdown remarkPlugins={remarkPlugins} components={markdownComponents}>
-                  {source}
-                </ReactMarkdown>
-              ) : (
-                <p className="markdown-empty">{copy.preview.empty}</p>
-              )}
+            <div ref={previewRef}>
+              <PreviewPanel
+                content={hasContent ? source : ''}
+                remarkPlugins={remarkPlugins}
+                markdownComponents={markdownComponents}
+                copy={copy}
+              />
             </div>
           </div>
         </div>

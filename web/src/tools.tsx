@@ -17,7 +17,8 @@ export type ToolId =
   | 'randomStringGenerator'
   | 'blockPuzzleSolver'
   | 'zipTool'
-  | 'rubiksCubeSolver';
+  | 'rubiksCubeSolver'
+  | 'subtitleFormatter';
 
 export type ToolDefinition = {
   id: ToolId;
@@ -74,6 +75,9 @@ const ZipTool = lazy(loadZipTool);
 
 const loadRubiksCubeSolver = () => import('./RubiksCubeSolver.tsx');
 const RubiksCubeSolver = lazy(loadRubiksCubeSolver);
+
+const loadSubtitleFormatter = () => import('./SubtitleFormatter.tsx');
+const SubtitleFormatter = lazy(loadSubtitleFormatter);
 
 export const tools: ToolDefinition[] = [
   {
@@ -180,6 +184,13 @@ export const tools: ToolDefinition[] = [
     executionMode: 'browser',
     Component: ZipTool,
     preload: loadZipTool,
+  },
+  {
+    id: 'subtitleFormatter',
+    slug: 'subtitle-formatter',
+    executionMode: 'browser',
+    Component: SubtitleFormatter,
+    preload: loadSubtitleFormatter,
   },
   // {
   //   id: 'rubiksCubeSolver',

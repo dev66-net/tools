@@ -17,6 +17,7 @@ import urlParser from './urlParser';
 import uuidGenerator from './uuidGenerator';
 import zipTool from './zipTool';
 import rubiksCubeSolver from './rubiksCubeSolver';
+import subtitleFormatter from './subtitleFormatter';
 
 const tools: Record<ToolId, ToolCopy> = {
   qrGenerator,
@@ -35,6 +36,7 @@ const tools: Record<ToolId, ToolCopy> = {
   blockPuzzleSolver,
   zipTool,
   rubiksCubeSolver,
+  subtitleFormatter,
 };
 
 export default tools;
