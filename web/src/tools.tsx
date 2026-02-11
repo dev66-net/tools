@@ -18,7 +18,8 @@ export type ToolId =
   | 'blockPuzzleSolver'
   | 'zipTool'
   | 'rubiksCubeSolver'
-  | 'subtitleFormatter';
+  | 'subtitleFormatter'
+  | 'minesweeper';
 
 export type ToolDefinition = {
   id: ToolId;
@@ -78,6 +79,9 @@ const RubiksCubeSolver = lazy(loadRubiksCubeSolver);
 
 const loadSubtitleFormatter = () => import('./SubtitleFormatter.tsx');
 const SubtitleFormatter = lazy(loadSubtitleFormatter);
+
+const loadMinesweeper = () => import('./Minesweeper.tsx');
+const Minesweeper = lazy(loadMinesweeper);
 
 export const tools: ToolDefinition[] = [
   {
@@ -191,6 +195,13 @@ export const tools: ToolDefinition[] = [
     executionMode: 'browser',
     Component: SubtitleFormatter,
     preload: loadSubtitleFormatter,
+  },
+  {
+    id: 'minesweeper',
+    slug: 'minesweeper',
+    executionMode: 'browser',
+    Component: Minesweeper,
+    preload: loadMinesweeper,
   },
   // {
   //   id: 'rubiksCubeSolver',
