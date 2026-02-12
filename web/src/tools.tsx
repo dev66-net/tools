@@ -19,7 +19,8 @@ export type ToolId =
   | 'zipTool'
   | 'rubiksCubeSolver'
   | 'subtitleFormatter'
-  | 'minesweeper';
+  | 'minesweeper'
+  | 'twentyFourSolver';
 
 export type ToolDefinition = {
   id: ToolId;
@@ -82,6 +83,9 @@ const SubtitleFormatter = lazy(loadSubtitleFormatter);
 
 const loadMinesweeper = () => import('./Minesweeper.tsx');
 const Minesweeper = lazy(loadMinesweeper);
+
+const loadTwentyFourSolver = () => import('./TwentyFourSolver.tsx');
+const TwentyFourSolver = lazy(loadTwentyFourSolver);
 
 export const tools: ToolDefinition[] = [
   {
@@ -202,6 +206,13 @@ export const tools: ToolDefinition[] = [
     executionMode: 'browser',
     Component: Minesweeper,
     preload: loadMinesweeper,
+  },
+  {
+    id: 'twentyFourSolver',
+    slug: '24-game-solver',
+    executionMode: 'browser',
+    Component: TwentyFourSolver,
+    preload: loadTwentyFourSolver,
   },
   // {
   //   id: 'rubiksCubeSolver',

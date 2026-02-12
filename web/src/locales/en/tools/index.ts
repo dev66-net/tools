@@ -19,6 +19,7 @@ import zipTool from './zipTool';
 import rubiksCubeSolver from './rubiksCubeSolver';
 import subtitleFormatter from './subtitleFormatter';
 import minesweeper from './minesweeper';
+import twentyFourSolver from './twentyFourSolver';
 
 const tools: Record<ToolId, ToolCopy> = {
   qrGenerator,
@@ -39,6 +40,7 @@ const tools: Record<ToolId, ToolCopy> = {
   rubiksCubeSolver,
   subtitleFormatter,
   minesweeper,
+  twentyFourSolver,
 };
 
 export default tools;

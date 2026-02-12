@@ -2217,3 +2217,280 @@ canvas {
     color: #f9fafb;
   }
 }
+
+/* 24 Game Solver Styles */
+
+/* Input mode toggle */
+.mode-toggle {
+  display: inline-flex;
+  background: rgba(248, 250, 252, 0.9);
+  border-radius: 12px;
+  padding: 0.25rem;
+  gap: 0.25rem;
+}
+
+.mode-toggle-button {
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 0.95rem;
+  color: #4b5563;
+}
+
+.mode-toggle-button.active {
+  background: rgba(59, 130, 246, 0.15);
+  color: #1e40af;
+}
+
+.mode-toggle-button:hover:not(.active) {
+  background: rgba(148, 163, 184, 0.2);
+}
+
+/* Dial pad */
+.dial-pad {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 0.75rem;
+  margin: 1.5rem 0;
+}
+
+.dial-button {
+  padding: 0.75rem 0.5rem;
+  border: 1px solid rgba(148, 163, 184, 0.6);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.9);
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  color: #1f2937;
+}
+
+.dial-button:hover:not(:disabled) {
+  background: rgba(59, 130, 246, 0.1);
+  border-color: rgba(59, 130, 246, 0.5);
+  transform: translateY(-1px);
+}
+
+.dial-button:active:not(:disabled) {
+  transform: scale(0.95);
+}
+
+.dial-button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* Number cards */
+.number-cards {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.number-card {
+  aspect-ratio: 3/4;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.95);
+  border: 2px solid rgba(148, 163, 184, 0.6);
+  border-radius: 12px;
+  font-size: 2rem;
+  font-weight: 700;
+  transition: all 0.15s ease;
+}
+
+.number-card.filled {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(124, 58, 237, 0.1));
+  border-color: rgba(59, 130, 246, 0.5);
+  color: #1e40af;
+}
+
+.number-card.empty {
+  background: rgba(248, 250, 252, 0.9);
+  border: 2px dashed rgba(148, 163, 184, 0.5);
+  color: #94a3b8;
+  font-size: 1.2rem;
+}
+
+/* Solutions list */
+.solutions-list {
+  display: grid;
+  gap: 0.75rem;
+  max-height: 400px;
+  overflow-y: auto;
+  padding: 1rem;
+  background: rgba(248, 250, 252, 0.82);
+  border-radius: 14px;
+  border: 1px solid rgba(148, 163, 184, 0.45);
+  margin-bottom: 1rem;
+}
+
+.solution-item {
+  padding: 0.75rem 1rem;
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 10px;
+  font-family: 'SFMono-Regular', Consolas, monospace;
+  font-size: 1rem;
+  border: 1px solid rgba(148, 163, 184, 0.3);
+  color: #1f2937;
+}
+
+/* No solution */
+.no-solution {
+  padding: 2rem;
+  text-align: center;
+  background: rgba(254, 243, 199, 0.7);
+  border: 1px dashed rgba(161, 98, 7, 0.4);
+  border-radius: 14px;
+  color: #92400e;
+}
+
+.no-solution p {
+  margin: 0 0 0.5rem;
+  font-weight: 600;
+}
+
+.no-solution .hint {
+  margin: 0;
+  color: #a16207;
+  font-size: 0.9rem;
+}
+
+/* Number input styling */
+input[type='number'] {
+  padding: 0.75rem 1rem;
+  border: 1px solid rgba(148, 163, 184, 0.65);
+  border-radius: 12px;
+  font-size: 1rem;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  outline: none;
+  width: 100%;
+}
+
+input[type='number']:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.15);
+}
+
+input[type='number']::-webkit-inner-spin-button,
+input[type='number']::-webkit-outer-spin-button {
+  opacity: 1;
+}
+
+/* Responsive adjustments */
+@media (max-width: 640px) {
+  .dial-pad {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.5rem;
+  }
+
+  .dial-button {
+    padding: 0.6rem 0.4rem;
+    font-size: 1rem;
+  }
+
+  .number-cards {
+    gap: 0.75rem;
+  }
+
+  .number-card {
+    font-size: 1.5rem;
+  }
+
+  .solutions-list {
+    max-height: 300px;
+  }
+
+  .solution-item {
+    font-size: 0.9rem;
+    padding: 0.6rem 0.8rem;
+  }
+}
+
+/* Dark mode support for 24 solver */
+@media (prefers-color-scheme: dark) {
+  .mode-toggle {
+    background: rgba(31, 41, 55, 0.9);
+  }
+
+  .mode-toggle-button {
+    color: #d1d5db;
+  }
+
+  .mode-toggle-button.active {
+    background: rgba(59, 130, 246, 0.2);
+    color: #93c5fd;
+  }
+
+  .mode-toggle-button:hover:not(.active) {
+    background: rgba(75, 85, 99, 0.3);
+  }
+
+  .dial-button {
+    background: rgba(31, 41, 55, 0.9);
+    border-color: rgba(75, 85, 99, 0.6);
+    color: #f3f4f6;
+  }
+
+  .dial-button:hover:not(:disabled) {
+    background: rgba(59, 130, 246, 0.15);
+    border-color: rgba(59, 130, 246, 0.6);
+  }
+
+  .number-card {
+    background: rgba(31, 41, 55, 0.95);
+    border-color: rgba(75, 85, 99, 0.6);
+    color: #f3f4f6;
+  }
+
+  .number-card.filled {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(124, 58, 237, 0.2));
+    border-color: rgba(59, 130, 246, 0.6);
+    color: #93c5fd;
+  }
+
+  .number-card.empty {
+    background: rgba(31, 41, 55, 0.9);
+    border-color: rgba(75, 85, 99, 0.5);
+    color: #6b7280;
+  }
+
+  .solutions-list {
+    background: rgba(17, 24, 39, 0.82);
+    border-color: rgba(75, 85, 99, 0.45);
+  }
+
+  .solution-item {
+    background: rgba(31, 41, 55, 0.95);
+    border-color: rgba(75, 85, 99, 0.4);
+    color: #f3f4f6;
+  }
+
+  input[type='number'] {
+    background: rgba(31, 41, 55, 0.9);
+    border-color: rgba(75, 85, 99, 0.6);
+    color: #f3f4f6;
+  }
+
+  input[type='number']:focus {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15);
+  }
+
+  .no-solution {
+    background: rgba(120, 53, 15, 0.3);
+    border-color: rgba(161, 98, 7, 0.5);
+    color: #fcd34d;
+  }
+
+  .no-solution .hint {
+    color: #fbbf24;
+  }
+}
