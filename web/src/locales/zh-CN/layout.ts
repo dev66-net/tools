@@ -15,6 +15,9 @@ const layout: LayoutCopy = {
   executionModeRemote: '依赖远程服务',
   executionNoteDefault: '本站所有工具默认由浏览器本地执行，避免敏感数据外泄。',
   loadingLabel: '正在加载 {label}…',
+  backToHomeLabel: '返回 Dev66 主站',
+  backToHomeHref: 'https://dev66.net/zh-cn',
+  githubLinkTitle: 'GitHub 仓库',
 };
 
 export default layout;

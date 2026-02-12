@@ -29,6 +29,9 @@ export type LayoutCopy = {
   executionModeRemote: string;
   executionNoteDefault: string;
   loadingLabel: string;
+  backToHomeLabel: string;
+  backToHomeHref: string;
+  githubLinkTitle: string;
 };
 
 export type SiteCopy = {

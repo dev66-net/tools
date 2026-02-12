@@ -15,6 +15,9 @@ const layout: LayoutCopy = {
   executionModeRemote: 'Requires remote service',
   executionNoteDefault: 'All tools run locally in your browser so sensitive data stays on your device.',
   loadingLabel: 'Loading {label}…',
+  backToHomeLabel: 'Back to Dev66',
+  backToHomeHref: 'https://dev66.net/',
+  githubLinkTitle: 'GitHub Repository',
 };
 
 export default layout;

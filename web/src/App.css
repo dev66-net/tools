@@ -117,24 +117,30 @@ body.print-mode {
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
 }
 
-.github-link {
+.sidebar-icons {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  margin: 0 0 0.5rem;
+}
+
+.sidebar-icon-link {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  margin: 0 0 0.5rem;
   padding: 0.4rem;
-  border-radius: 12px;
-  color: inherit;
+  border-radius: 10px;
+  color: #6b7280;
   transition: background-color 0.2s ease, color 0.2s ease;
 }
 
-.github-link:hover,
-.github-link:focus {
+.sidebar-icon-link:hover,
+.sidebar-icon-link:focus {
   background-color: rgba(37, 99, 235, 0.12);
   color: #1f2937;
 }
 
-.github-icon {
+.sidebar-icon {
   width: 22px;
   height: 22px;
 }

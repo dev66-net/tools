@@ -353,25 +353,36 @@ function Layout() {
             aria-label={layout.searchAriaLabel}
           />
         </div>
-        <a
-          className="github-link"
-          href={githubRepoUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          aria-label="GitHub repository"
-        >
-          <svg
-            className="github-icon"
-            viewBox="0 0 24 24"
-            role="img"
-            aria-hidden="true"
+        <div className="sidebar-icons">
+          <a
+            className="sidebar-icon-link"
+            href={translations.layout.backToHomeHref}
+            target="_blank"
+            rel="noopener noreferrer"
+            title={translations.layout.backToHomeLabel}
+            aria-label={translations.layout.backToHomeLabel}
           >
-            <path
-              fill="currentColor"
-              d="M12 .5C5.65.5.5 5.65.5 12c0 5.08 3.29 9.39 7.86 10.92.58.1.79-.25.79-.56 0-.28-.01-1.02-.02-2-3.2.7-3.87-1.54-3.87-1.54-.53-1.34-1.3-1.7-1.3-1.7-1.06-.73.08-.72.08-.72 1.17.08 1.79 1.2 1.79 1.2 1.04 1.78 2.74 1.27 3.41.97.11-.75.41-1.27.75-1.56-2.55-.29-5.23-1.27-5.23-5.65 0-1.25.45-2.26 1.2-3.05-.12-.3-.52-1.52.11-3.17 0 0 .97-.31 3.18 1.17a11 11 0 0 1 2.9-.39c.99 0 1.99.13 2.9.39 2.2-1.48 3.17-1.17 3.17-1.17.63 1.65.23 2.87.11 3.17.75.79 1.2 1.8 1.2 3.05 0 4.39-2.69 5.35-5.25 5.63.42.37.8 1.09.8 2.2 0 1.59-.02 2.87-.02 3.26 0 .31.21.67.8.56A10.52 10.52 0 0 0 23.5 12C23.5 5.65 18.35.5 12 .5Z"
-            />
-          </svg>
-        </a>
+            <svg className="sidebar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M3 12l9-9 9 9" />
+              <path d="M5 10v10a1 1 0 001 1h3v-6h6v6h3a1 1 0 001-1V10" />
+            </svg>
+          </a>
+          <a
+            className="sidebar-icon-link"
+            href={githubRepoUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            title={layout.githubLinkTitle}
+            aria-label={layout.githubLinkTitle}
+          >
+            <svg className="sidebar-icon" viewBox="0 0 24 24" aria-hidden="true">
+              <path
+                fill="currentColor"
+                d="M12 .5C5.65.5.5 5.65.5 12c0 5.08 3.29 9.39 7.86 10.92.58.1.79-.25.79-.56 0-.28-.01-1.02-.02-2-3.2.7-3.87-1.54-3.87-1.54-.53-1.34-1.3-1.7-1.3-1.7-1.06-.73.08-.72.08-.72 1.17.08 1.79 1.2 1.79 1.2 1.04 1.78 2.74 1.27 3.41.97.11-.75.41-1.27.75-1.56-2.55-.29-5.23-1.27-5.23-5.65 0-1.25.45-2.26 1.2-3.05-.12-.3-.52-1.52.11-3.17 0 0 .97-.31 3.18 1.17a11 11 0 0 1 2.9-.39c.99 0 1.99.13 2.9.39 2.2-1.48 3.17-1.17 3.17-1.17.63 1.65.23 2.87.11 3.17.75.79 1.2 1.8 1.2 3.05 0 4.39-2.69 5.35-5.25 5.63.42.37.8 1.09.8 2.2 0 1.59-.02 2.87-.02 3.26 0 .31.21.67.8.56A10.52 10.52 0 0 0 23.5 12C23.5 5.65 18.35.5 12 .5Z"
+              />
+            </svg>
+          </a>
+        </div>
         <nav className="nav">
           <NavLink to={homeRoute.href} className={({ isActive }) => (isActive ? 'active' : '')} end>
             {layout.homeNavLabel}
